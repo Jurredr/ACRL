@@ -30,13 +30,9 @@ def acMain(ac_version):
 
     # Create the app window
     APP_WINDOW = ac.newApp(APP_NAME)
-    ac.setSize(APP_WINDOW, 200, 200)
+    ac.setSize(APP_WINDOW, 400, 400)
     ac.setTitle(APP_WINDOW, APP_NAME +
-                ": Assetto Corsa Reinforcement Learning")
-
-    # Custom icon
-    icon = os.path.join(os.path.dirname(__file__), "icon.png")
-    ac.setIcon(APP_WINDOW, icon)
+                ": Reinforcement Learning")
 
     global l_lapcount
     l_lapcount = ac.addLabel(APP_WINDOW, "Laps: 0")
