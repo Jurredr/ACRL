@@ -26,15 +26,23 @@ lapcount = 0
 
 
 def acMain(ac_version):
+    ac.console("[ACRL] Initializing...")
+
+    # Create the app window
     APP_WINDOW = ac.newApp(APP_NAME)
     ac.setSize(APP_WINDOW, 200, 200)
+    ac.setTitle(APP_WINDOW, APP_NAME +
+                ": Assetto Corsa Reinforcement Learning")
 
-    ac.console("[ACRL] Initializing...")
+    # Custom icon
+    icon = os.path.join(os.path.dirname(__file__), "icon.png")
+    ac.setIcon(APP_WINDOW, icon)
 
     global l_lapcount
     l_lapcount = ac.addLabel(APP_WINDOW, "Laps: 0")
     ac.setPosition(l_lapcount, 3, 30)
 
+    ac.console("[ACRL] Initialized")
     return APP_NAME
 
 
