@@ -7,21 +7,23 @@ APP_NAME = 'ACRL'
 
 # Add the third party libraries to the path
 if platform.architecture()[0] == "64bit":
-  sysdir = "stdlib64"
+    sysdir = "stdlib64"
 else:
-  sysdir = "stdlib"
+    sysdir = "stdlib"
 sys.path.insert(len(sys.path), 'apps/python/{}/third_party'.format(APP_NAME))
 os.environ['PATH'] += ";."
-sys.path.insert(len(sys.path), os.path.join('apps/python/{}/third_party'.format(APP_NAME), sysdir))
+sys.path.insert(len(sys.path), os.path.join(
+    'apps/python/{}/third_party'.format(APP_NAME), sysdir))
 os.environ['PATH'] += ";."
 
 # Import the Assetto Corsa libraries
-import ac
-import acsys
-from sim_info import info
+import ac  # noqa: E402
+import acsys  # noqa: E402
+from sim_info import info  # noqa: E402
 
 l_lapcount = 0
 lapcount = 0
+
 
 def acMain(ac_version):
     APP_WINDOW = ac.newApp(APP_NAME)
@@ -35,6 +37,7 @@ def acMain(ac_version):
 
     return APP_NAME
 
+
 def acUpdate(deltaT):
     global l_lapcount, lapcount
     ac.console(str(deltaT))
@@ -43,6 +46,7 @@ def acUpdate(deltaT):
     if laps > lapcount:
         lapcount = laps
         ac.setText(l_lapcount, "Laps: {}".format(lapcount))
+
 
 def acShutdown():
     ac.console("[ACRL] Shutting down...")
