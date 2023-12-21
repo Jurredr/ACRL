@@ -47,14 +47,30 @@ def acMain(ac_version):
 
     # Create the labels
     global l_speedkmh, l_laptime, l_normsplinepos, l_velocity, l_worldpos, l_pitch, l_roll, l_disttraveled
+
     l_speedkmh = ac.addLabel(APP_WINDOW, "Speed (km/h): 0")
+    ac.setPosition(l_speedkmh, 10, 30)
+
     l_laptime = ac.addLabel(APP_WINDOW, "Lap Time: 0")
+    ac.setPosition(l_laptime, 10, 60)
+
     l_normsplinepos = ac.addLabel(APP_WINDOW, "Normalized Spline Position: 0")
+    ac.setPosition(l_normsplinepos, 10, 90)
+
     l_velocity = ac.addLabel(APP_WINDOW, "Velocity: 0")
+    ac.setPosition(l_velocity, 10, 120)
+
     l_worldpos = ac.addLabel(APP_WINDOW, "World Position: 0")
+    ac.setPosition(l_worldpos, 10, 150)
+
     l_pitch = ac.addLabel(APP_WINDOW, "Pitch: 0")
+    ac.setPosition(l_pitch, 10, 180)
+
     l_roll = ac.addLabel(APP_WINDOW, "Roll: 0")
+    ac.setPosition(l_roll, 10, 210)
+
     l_disttraveled = ac.addLabel(APP_WINDOW, "Distance Traveled: 0")
+    ac.setPosition(l_disttraveled, 10, 240)
 
     ac.console("[ACRL] Initialized")
     return APP_NAME
