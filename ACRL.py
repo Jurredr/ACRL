@@ -42,7 +42,7 @@ def acMain(ac_version):
 
     # Create the app window
     APP_WINDOW = ac.newApp(APP_NAME)
-    ac.setSize(APP_WINDOW, 400, 400)
+    ac.setSize(APP_WINDOW, 320, 360)
     ac.setTitle(APP_WINDOW, APP_NAME +
                 ": Reinforcement Learning")
 
@@ -50,7 +50,7 @@ def acMain(ac_version):
     ac.setBackgroundOpacity(APP_WINDOW, 1)
 
     # Create the labels
-    global l_speedkmh, l_laptime, l_normsplinepos, l_velocity, l_worldpos, l_disttraveled
+    global l_speedkmh, l_laptime, l_normsplinepos, l_velocityX, l_velocityY, l_velocityZ, l_worldposX, l_worldposY, l_worldposZ, l_disttraveled
 
     l_speedkmh = ac.addLabel(APP_WINDOW, "Speed (km/h): 0")
     ac.setPosition(l_speedkmh, 10, 40)
@@ -87,7 +87,7 @@ def acMain(ac_version):
 
 
 def acUpdate(deltaT):
-    global l_speedkmh, l_laptime, l_normsplinepos, l_velocity, l_worldpos, l_disttraveled
+    global l_speedkmh, l_laptime, l_normsplinepos, l_velocityX, l_velocityY, l_velocityZ, l_worldposX, l_worldposY, l_worldposZ, l_disttraveled
 
     # Update the labels
     # Speed (km/h)
