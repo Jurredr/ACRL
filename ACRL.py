@@ -90,34 +90,44 @@ def acUpdate(deltaT):
     global l_speedkmh, l_laptime, l_normsplinepos, l_velocity, l_worldpos, l_disttraveled
 
     # Update the labels
+    # Speed (km/h)
     speed = ac.getCarState(0, acsys.CS.SpeedKMH)
     ac.setText(l_speedkmh, "Speed (km/h): {}".format(round(speed, DECIMALS)))
 
+    # Lap time
     laptime = ac.getCarState(0, acsys.CS.LapTime)
     ac.setText(l_laptime, "Lap Time: {}".format(round(laptime, DECIMALS)))
 
+    # Normalized spline position
     splinepos = ac.getCarState(0, acsys.CS.NormalizedSplinePosition)
     ac.setText(l_normsplinepos, "Normalized Spline Position: {}".format(
         round(splinepos, DECIMALS)))
 
+    # Velocity
     velocity = ac.getCarState(0, acsys.CS.Velocity)
+    velocity_x = velocity[0]
+    velocity_y = velocity[1]
+    velocity_z = velocity[2]
     ac.setText(l_velocityX, "Velocity X: {}".format(
-        round(velocity[0], DECIMALS)))
+        round(velocity_x, DECIMALS)))
     ac.setText(l_velocityY, "Velocity Y: {}".format(
-        round(velocity[1], DECIMALS)))
+        round(velocity_y, DECIMALS)))
     ac.setText(l_velocityZ, "Velocity Z: {}".format(
-        round(velocity[2], DECIMALS)))
+        round(velocity_z, DECIMALS)))
 
+    # World position
     worldpos = ac.getCarState(0, acsys.CS.WorldPosition)
-    ac.console("World Position: {}".format(worldpos))
-    ac.console("World Position X: {}".format(worldpos[0]))
+    worldpos_x = worldpos[0]
+    worldpos_y = worldpos[1]
+    worldpos_z = worldpos[2]
     ac.setText(l_worldposX, "World Position X: {}".format(
-        round(worldpos[0], DECIMALS)))
+        round(worldpos_x, DECIMALS)))
     ac.setText(l_worldposY, "World Position Y: {}".format(
-        round(worldpos[1], DECIMALS)))
+        round(worldpos_y, DECIMALS)))
     ac.setText(l_worldposZ, "World Position Z: {}".format(
-        round(worldpos[2], DECIMALS)))
+        round(worldpos_z, DECIMALS)))
 
+    # Distance traveled
     dist_traveled = info.graphics.distanceTraveled
     ac.setText(l_disttraveled, "Distance Traveled: {}".format(
         round(dist_traveled, DECIMALS)))
