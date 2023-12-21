@@ -21,8 +21,15 @@ import ac  # noqa: E402
 import acsys  # noqa: E402
 from sim_info import info  # noqa: E402
 
-l_lapcount = 0
-lapcount = 0
+# Value labels
+l_speedkmh = 0
+l_laptime = 0
+l_normsplinepos = 0
+l_velocity = 0
+l_worldpos = 0
+l_pitch = 0
+l_roll = 0
+l_disttraveled = 0
 
 
 def acMain(ac_version):
@@ -34,22 +41,41 @@ def acMain(ac_version):
     ac.setTitle(APP_WINDOW, APP_NAME +
                 ": Reinforcement Learning")
 
-    global l_lapcount
-    l_lapcount = ac.addLabel(APP_WINDOW, "Laps: 0")
-    ac.setPosition(l_lapcount, 3, 30)
+    # Background
+    ac.setBackgroundOpacity(APP_WINDOW, 1)
+    ac.setBackgroundColor(APP_WINDOW, 255, 255, 255)
+
+    # Create the labels
+    global l_speedkmh, l_laptime, l_normsplinepos, l_velocity, l_worldpos, l_pitch, l_roll, l_disttraveled
+    l_speedkmh = ac.addLabel(APP_WINDOW, "Speed (km/h): 0")
+    l_laptime = ac.addLabel(APP_WINDOW, "Lap Time: 0")
+    l_normsplinepos = ac.addLabel(APP_WINDOW, "Normalized Spline Position: 0")
+    l_velocity = ac.addLabel(APP_WINDOW, "Velocity: 0")
+    l_worldpos = ac.addLabel(APP_WINDOW, "World Position: 0")
+    l_pitch = ac.addLabel(APP_WINDOW, "Pitch: 0")
+    l_roll = ac.addLabel(APP_WINDOW, "Roll: 0")
+    l_disttraveled = ac.addLabel(APP_WINDOW, "Distance Traveled: 0")
 
     ac.console("[ACRL] Initialized")
     return APP_NAME
 
 
 def acUpdate(deltaT):
-    global l_lapcount, lapcount
-    ac.console(str(deltaT))
-    laps = ac.getCarState(0, acsys.CS.LapCount)
-
-    if laps > lapcount:
-        lapcount = laps
-        ac.setText(l_lapcount, "Laps: {}".format(lapcount))
+    # Update the labels
+    ac.setText(
+        l_speedkmh, "Speed (km/h): {}".format(ac.getCarState(0, acsys.CS.SpeedKMH)))
+    ac.setText(l_laptime, "Lap Time: {}".format(
+        ac.getCarState(0, acsys.CS.LapTime)))
+    ac.setText(l_normsplinepos, "Normalized Spline Position: {}".format(
+        ac.getCarState(0, acsys.CS.NormalizedSplinePosition)))
+    ac.setText(l_velocity, "Velocity: {}".format(
+        ac.getCarState(0, acsys.CS.Velocity)))
+    ac.setText(l_worldpos, "World Position: {}".format(
+        ac.getCarState(0, acsys.CS.WorldPosition)))
+    ac.setText(l_pitch, "Pitch: {}".format(info.physics.pitch))
+    ac.setText(l_roll, "Roll: {}".format(info.physics.roll))
+    ac.setText(l_disttraveled, "Distance Traveled: {}".format(
+        info.physics.distanceTraveled))
 
 
 def acShutdown():
