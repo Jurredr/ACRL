@@ -46,9 +46,8 @@ def acMain(ac_version):
     ac.setTitle(APP_WINDOW, APP_NAME +
                 ": Reinforcement Learning")
 
-    # Background
+    # Background fully black
     ac.setBackgroundOpacity(APP_WINDOW, 1)
-    ac.setBackgroundColor(APP_WINDOW, 255, 255, 255)
 
     # Create the labels
     global l_speedkmh, l_laptime, l_normsplinepos, l_velocity, l_worldpos, l_disttraveled
@@ -110,6 +109,8 @@ def acUpdate(deltaT):
         round(velocity[2], DECIMALS)))
 
     worldpos = ac.getCarState(0, acsys.CS.WorldPosition)
+    ac.console("World Position: {}".format(worldpos))
+    ac.console("World Position X: {}".format(worldpos[0]))
     ac.setText(l_worldposX, "World Position X: {}".format(
         round(worldpos[0], DECIMALS)))
     ac.setText(l_worldposY, "World Position Y: {}".format(
