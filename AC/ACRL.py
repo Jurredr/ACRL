@@ -26,7 +26,8 @@ from sim_info import info  # noqa: E402
 # Value labels
 l_speedkmh = 0
 l_laptime = 0
-l_normsplinepos = 0
+l_laptimeInvalid = 0
+l_lapFinished = 0
 l_velocityX = 0
 l_velocityY = 0
 l_velocityZ = 0
@@ -44,7 +45,7 @@ def acMain(ac_version):
 
     # Create the app window
     APP_WINDOW = ac.newApp(APP_NAME)
-    ac.setSize(APP_WINDOW, 320, 360)
+    ac.setSize(APP_WINDOW, 320, 390)
     ac.setTitle(APP_WINDOW, APP_NAME +
                 ": Reinforcement Learning")
 
@@ -52,7 +53,7 @@ def acMain(ac_version):
     ac.setBackgroundOpacity(APP_WINDOW, 1)
 
     # Create the labels
-    global l_speedkmh, l_laptime, l_normsplinepos, l_velocityX, l_velocityY, l_velocityZ, l_worldposX, l_worldposY, l_worldposZ, l_disttraveled
+    global l_speedkmh, l_laptime, l_laptimeInvalid, l_lapFinished, l_velocityX, l_velocityY, l_velocityZ, l_worldposX, l_worldposY, l_worldposZ, l_disttraveled
 
     l_speedkmh = ac.addLabel(APP_WINDOW, "Speed (km/h): 0")
     ac.setPosition(l_speedkmh, 10, 40)
@@ -60,29 +61,32 @@ def acMain(ac_version):
     l_laptime = ac.addLabel(APP_WINDOW, "Lap Time: 0")
     ac.setPosition(l_laptime, 10, 70)
 
-    l_normsplinepos = ac.addLabel(APP_WINDOW, "Normalized Spline Position: 0")
-    ac.setPosition(l_normsplinepos, 10, 100)
+    l_laptimeInvalid = ac.addLabel(APP_WINDOW, "Lap Time Invalid: False")
+    ac.setPosition(l_laptimeInvalid, 10, 100)
+
+    l_lapFinished = ac.addLabel(APP_WINDOW, "Lap Finished: False")
+    ac.setPosition(l_lapFinished, 10, 130)
 
     l_velocityX = ac.addLabel(APP_WINDOW, "Velocity X: 0")
-    ac.setPosition(l_velocityX, 10, 130)
+    ac.setPosition(l_velocityX, 10, 160)
 
     l_velocityY = ac.addLabel(APP_WINDOW, "Velocity Y: 0")
-    ac.setPosition(l_velocityY, 10, 160)
+    ac.setPosition(l_velocityY, 10, 190)
 
     l_velocityZ = ac.addLabel(APP_WINDOW, "Velocity Z: 0")
-    ac.setPosition(l_velocityZ, 10, 190)
+    ac.setPosition(l_velocityZ, 10, 220)
 
     l_worldposX = ac.addLabel(APP_WINDOW, "World Position X: 0")
-    ac.setPosition(l_worldposX, 10, 220)
+    ac.setPosition(l_worldposX, 10, 250)
 
     l_worldposY = ac.addLabel(APP_WINDOW, "World Position Y: 0")
-    ac.setPosition(l_worldposY, 10, 250)
+    ac.setPosition(l_worldposY, 10, 280)
 
     l_worldposZ = ac.addLabel(APP_WINDOW, "World Position Z: 0")
-    ac.setPosition(l_worldposZ, 10, 280)
+    ac.setPosition(l_worldposZ, 10, 310)
 
     l_disttraveled = ac.addLabel(APP_WINDOW, "Distance Traveled: 0")
-    ac.setPosition(l_disttraveled, 10, 310)
+    ac.setPosition(l_disttraveled, 10, 340)
 
     ac.console("[ACRL] Initialized")
     return APP_NAME
@@ -100,10 +104,13 @@ def acUpdate(deltaT):
     laptime = ac.getCarState(0, acsys.CS.LapTime)
     ac.setText(l_laptime, "Lap Time: {}".format(round(laptime, DECIMALS)))
 
-    # Normalized spline position
-    splinepos = ac.getCarState(0, acsys.CS.NormalizedSplinePosition)
-    ac.setText(l_normsplinepos, "Normalized Spline Position: {}".format(
-        round(splinepos, DECIMALS)))
+    # Lap Time Invalid
+    laptime_invalid = ac.getCarState(0, acsys.CS.LapInvalidated)
+    ac.setText(l_laptimeInvalid, "Lap Time Invalid: {}".format(laptime_invalid))
+
+    # Lap Finished
+    lap_finished = ac.getCarState(0, acsys.CS.LapCount)
+    ac.setText(l_lapFinished, "Lap Finished: {}".format(str(lap_finished > 0)))
 
     # Velocity
     velocity = ac.getCarState(0, acsys.CS.Velocity)
