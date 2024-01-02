@@ -1,6 +1,7 @@
 import sys
 import os
 import platform
+import threading
 
 # The name of the app
 APP_NAME = 'ACRL'
@@ -24,6 +25,7 @@ except Exception as e:
 import ac  # noqa: E402
 import acsys  # noqa: E402
 from sim_info import info  # noqa: E402
+from IS_ACUtil import *  # noqa: E402
 
 # Value labels
 l_speedkmh = 0
@@ -142,6 +144,16 @@ def acUpdate(deltaT):
     dist_traveled = info.graphics.distanceTraveled
     ac.setText(l_disttraveled, "Distance Traveled: {}".format(
         round(dist_traveled, DECIMALS)))
+
+    t_kh = threading.Thread(target=keyhook)
+    t_kh.start()
+
+
+def keyhook():
+    while True:
+        if getKeyState(17):
+            if getKeyState(48):
+                ac.console("[ACRL] Ctrl + 0 pressed")
 
 
 def acShutdown():
