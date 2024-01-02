@@ -92,6 +92,9 @@ def acMain(ac_version):
     l_disttraveled = ac.addLabel(APP_WINDOW, "Distance Traveled: 0")
     ac.setPosition(l_disttraveled, 10, 340)
 
+    t_kh = threading.Thread(target=keyhook)
+    t_kh.start()
+
     ac.console("[ACRL] Initialized")
     return APP_NAME
 
@@ -145,15 +148,14 @@ def acUpdate(deltaT):
     ac.setText(l_disttraveled, "Distance Traveled: {}".format(
         round(dist_traveled, DECIMALS)))
 
-    t_kh = threading.Thread(target=keyhook)
-    t_kh.start()
-
 
 def keyhook():
     while True:
         if getKeyState(17):
             if getKeyState(48):
-                ac.console("[ACRL] Ctrl + 0 pressed")
+                sendCMD(68)
+                sendCMD(69)
+                break
 
 
 def acShutdown():
