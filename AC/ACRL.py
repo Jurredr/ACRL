@@ -107,7 +107,7 @@ def acUpdate(deltaT):
     ac.setText(l_laptime, "Lap Time: {}".format(round(laptime, DECIMALS)))
 
     # Lap Time Invalid
-    laptime_invalid = ac.getCarState(0, acsys.CS.LapInvalidated)
+    laptime_invalid = ac.getCarState(0, info.physics.numberOfTyresOut)
     ac.setText(l_laptimeInvalid, "Lap Time Invalid: {}".format(laptime_invalid))
 
     # Lap Finished
