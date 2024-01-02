@@ -6,17 +6,14 @@ import platform
 APP_NAME = 'ACRL'
 
 # Add the third party libraries to the path
-try:
-    if platform.architecture()[0] == "64bit":
-        sysdir = "stdlib64"
-    else:
-        sysdir = "stdlib"
+if platform.architecture()[0] == "64bit":
+    sysdir = "stdlib64"
+else:
+    sysdir = "stdlib"
 
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(__file__), "third_party", sysdir))
-    os.environ['PATH'] = os.environ['PATH'] + ";."
-except Exception as e:
-    ac.log("[ACRL] Error importing libraries: %s" % e)
+sys.path.insert(0, os.path.join(
+    os.path.dirname(__file__), "third_party", sysdir))
+os.environ['PATH'] = os.environ['PATH'] + ";."
 
 # Import the Assetto Corsa libraries
 import ac  # noqa: E402
