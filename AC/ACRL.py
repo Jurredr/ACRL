@@ -93,7 +93,7 @@ def acMain(ac_version):
 
 
 def acUpdate(deltaT):
-    global l_speedkmh, l_laptime, l_normsplinepos, l_velocityX, l_velocityY, l_velocityZ, l_worldposX, l_worldposY, l_worldposZ, l_disttraveled
+    global l_speedkmh, l_laptime, l_laptimeInvalid, l_lapFinished, l_velocityX, l_velocityY, l_velocityZ, l_worldposX, l_worldposY, l_worldposZ, l_disttraveled
 
     # Update the labels
     # Speed (km/h)
