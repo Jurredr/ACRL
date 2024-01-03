@@ -1,4 +1,4 @@
-from IS_ACUtil import *  # noqa: E402
+from IS_ACUtil import *
 
 # https://pypi.org/project/vgamepad/
 deltaX = 0
