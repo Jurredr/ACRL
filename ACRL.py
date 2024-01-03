@@ -80,7 +80,13 @@ def acUpdate(deltaT):
     4. Sends output to the game
     """
 
+    # If the model is not running, don't do anything
+    if not model_running:
+        return
+
     # 1. Get input from the game
+    input = None
+
     # 2. Send input to the model
     # 3. Get output from the model
     # 4. Send output to the game
