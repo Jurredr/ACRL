@@ -1,7 +1,6 @@
 import sys
 import os
 import platform
-import threading
 
 # The name of the app
 APP_NAME = 'ACRL'
@@ -92,8 +91,8 @@ def acMain(ac_version):
     l_disttraveled = ac.addLabel(APP_WINDOW, "Distance Traveled: 0")
     ac.setPosition(l_disttraveled, 10, 340)
 
-    t_kh = threading.Thread(target=keyhook)
-    t_kh.start()
+    # t_kh = threading.Thread(target=keyhook)
+    # t_kh.start()
 
     ac.console("[ACRL] Initialized")
     return APP_NAME
@@ -149,13 +148,12 @@ def acUpdate(deltaT):
         round(dist_traveled, DECIMALS)))
 
 
-def keyhook():
-    while True:
-        if getKeyState(17):
-            if getKeyState(48):
-                sendCMD(68)
-                sendCMD(69)
-                break
+def restart():
+    ac.console("[ACRL] Respawning...")
+    # Restart to session menu
+    sendCMD(68)
+    # Start the lap + driving
+    sendCMD(69)
 
 
 def acShutdown():
