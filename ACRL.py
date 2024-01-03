@@ -1,8 +1,9 @@
 import sys
 import os
 import platform
+import ac
 
-# The name of the app
+# The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
 APP_NAME = 'ACRL'
 
 # Add the third party libraries to the path
@@ -20,141 +21,102 @@ try:
 except Exception as e:
     ac.log("[ACRL] Error importing libraries: %s" % e)
 
-# Import the Assetto Corsa libraries
-import ac  # noqa: E402
-import acsys  # noqa: E402
-from sim_info import info  # noqa: E402
-from IS_ACUtil import *  # noqa: E402
+# Flag for if the model is running
+model_running = False
 
-# Value labels
-l_speedkmh = 0
-l_laptime = 0
-l_laptimeInvalid = 0
-l_lapFinished = 0
-l_velocityX = 0
-l_velocityY = 0
-l_velocityZ = 0
-l_worldposX = 0
-l_worldposY = 0
-l_worldposZ = 0
-l_disttraveled = 0
-
-# Rounding decimals
-DECIMALS = 3
+# Label & button variables
+label_model_info = None
+btn_start = None
+btn_stop = None
 
 
 def acMain(ac_version):
+    """
+    The main function of the app, called on app start.
+    :param ac_version: The version of Assetto Corsa as a string.
+    """
+    global label_model_info, btn_start, btn_stop
     ac.console("[ACRL] Initializing...")
 
     # Create the app window
     APP_WINDOW = ac.newApp(APP_NAME)
-    ac.setSize(APP_WINDOW, 320, 390)
+    ac.setSize(APP_WINDOW, 320, 100)
     ac.setTitle(APP_WINDOW, APP_NAME +
                 ": Reinforcement Learning")
 
     # Background fully black
     ac.setBackgroundOpacity(APP_WINDOW, 1)
 
-    # Create the labels
-    global l_speedkmh, l_laptime, l_laptimeInvalid, l_lapFinished, l_velocityX, l_velocityY, l_velocityZ, l_worldposX, l_worldposY, l_worldposZ, l_disttraveled
+    # Info label
+    label_model_info = ac.addLabel(
+        APP_WINDOW, "Model Running: " + str(model_running))
+    ac.setPosition(label_model_info, 10, 10)
 
-    l_speedkmh = ac.addLabel(APP_WINDOW, "Speed (km/h): 0")
-    ac.setPosition(l_speedkmh, 10, 40)
+    # Start button
+    btn_start = ac.addButton(APP_WINDOW, "Start Model")
+    ac.setPosition(btn_start, 10, 40)
+    ac.addOnClickedListener(btn_start, start)
+    ac.setVisible(btn_start, 1)
 
-    l_laptime = ac.addLabel(APP_WINDOW, "Lap Time: 0")
-    ac.setPosition(l_laptime, 10, 70)
-
-    l_laptimeInvalid = ac.addLabel(APP_WINDOW, "Lap Time Invalid: False")
-    ac.setPosition(l_laptimeInvalid, 10, 100)
-
-    l_lapFinished = ac.addLabel(APP_WINDOW, "Lap Finished: False")
-    ac.setPosition(l_lapFinished, 10, 130)
-
-    l_velocityX = ac.addLabel(APP_WINDOW, "Velocity X: 0")
-    ac.setPosition(l_velocityX, 10, 160)
-
-    l_velocityY = ac.addLabel(APP_WINDOW, "Velocity Y: 0")
-    ac.setPosition(l_velocityY, 10, 190)
-
-    l_velocityZ = ac.addLabel(APP_WINDOW, "Velocity Z: 0")
-    ac.setPosition(l_velocityZ, 10, 220)
-
-    l_worldposX = ac.addLabel(APP_WINDOW, "World Position X: 0")
-    ac.setPosition(l_worldposX, 10, 250)
-
-    l_worldposY = ac.addLabel(APP_WINDOW, "World Position Y: 0")
-    ac.setPosition(l_worldposY, 10, 280)
-
-    l_worldposZ = ac.addLabel(APP_WINDOW, "World Position Z: 0")
-    ac.setPosition(l_worldposZ, 10, 310)
-
-    l_disttraveled = ac.addLabel(APP_WINDOW, "Distance Traveled: 0")
-    ac.setPosition(l_disttraveled, 10, 340)
-
-    # t_kh = threading.Thread(target=keyhook)
-    # t_kh.start()
+    # Stop button
+    btn_stop = ac.addButton(APP_WINDOW, "Stop Model")
+    ac.setPosition(btn_stop, 10, 70)
+    ac.addOnClickedListener(btn_stop, stop)
+    ac.setVisible(btn_stop, 0)
 
     ac.console("[ACRL] Initialized")
     return APP_NAME
 
 
 def acUpdate(deltaT):
-    global l_speedkmh, l_laptime, l_laptimeInvalid, l_lapFinished, l_velocityX, l_velocityY, l_velocityZ, l_worldposX, l_worldposY, l_worldposZ, l_disttraveled
+    """
+    The update function of the app, called every frame.
+    :param deltaT: The time since the last frame as a float.
 
-    # Update the labels
-    # Speed (km/h)
-    speed = ac.getCarState(0, acsys.CS.SpeedKMH)
-    ac.setText(l_speedkmh, "Speed (km/h): {}".format(round(speed, DECIMALS)))
+    In this function, the app:
+    1. Gets input from the game
+    2. Sends input to the model
+    3. Gets output from the model
+    4. Sends output to the game
+    """
 
-    # Lap time
-    laptime = ac.getCarState(0, acsys.CS.LapTime)
-    ac.setText(l_laptime, "Lap Time: {}".format(round(laptime, DECIMALS)))
-
-    # Lap Time Invalid
-    laptime_invalid = ac.getCarState(0, info.physics.numberOfTyresOut)
-    ac.setText(l_laptimeInvalid, "Lap Time Invalid: {}".format(laptime_invalid))
-
-    # Lap Finished
-    lap_finished = ac.getCarState(0, acsys.CS.LapCount)
-    ac.setText(l_lapFinished, "Lap Finished: {}".format(str(lap_finished > 0)))
-
-    # Velocity
-    velocity = ac.getCarState(0, acsys.CS.Velocity)
-    velocity_x = velocity[0]
-    velocity_y = velocity[1]
-    velocity_z = velocity[2]
-    ac.setText(l_velocityX, "Velocity X: {}".format(
-        round(velocity_x, DECIMALS)))
-    ac.setText(l_velocityY, "Velocity Y: {}".format(
-        round(velocity_y, DECIMALS)))
-    ac.setText(l_velocityZ, "Velocity Z: {}".format(
-        round(velocity_z, DECIMALS)))
-
-    # World position
-    worldpos = ac.getCarState(0, acsys.CS.WorldPosition)
-    worldpos_x = worldpos[0]
-    worldpos_y = worldpos[1]
-    worldpos_z = worldpos[2]
-    ac.setText(l_worldposX, "World Position X: {}".format(
-        round(worldpos_x, DECIMALS)))
-    ac.setText(l_worldposY, "World Position Y: {}".format(
-        round(worldpos_y, DECIMALS)))
-    ac.setText(l_worldposZ, "World Position Z: {}".format(
-        round(worldpos_z, DECIMALS)))
-
-    # Distance traveled
-    dist_traveled = info.graphics.distanceTraveled
-    ac.setText(l_disttraveled, "Distance Traveled: {}".format(
-        round(dist_traveled, DECIMALS)))
-
-
-def restart():
-    ac.console("[ACRL] Respawning...")
-    # Restart to session menu
-    sendCMD(68)
-    # Start the lap + driving
-    sendCMD(69)
+    # 1. Get input from the game
+    # 2. Send input to the model
+    # 3. Get output from the model
+    # 4. Send output to the game
+    pass
 
 
 def acShutdown():
+    """
+    The shutdown function of the app, called on app close.
+    """
+    global model_running
+    model_running = False
     ac.console("[ACRL] Shutting down...")
+
+
+def start(*args):
+    """
+    The function called when the start button is pressed.
+    :param args: The arguments passed to the function.
+    """
+    global btn_start, btn_stop, model_running
+    ac.console("[ACRL] Starting model...")
+
+    ac.setVisible(btn_start, 0)
+    ac.setVisible(btn_stop, 1)
+    model_running = True
+
+
+def stop(*args):
+    """
+    The function called when the stop button is pressed.
+    :param args: The arguments passed to the function.
+    """
+    global btn_start, btn_stop, model_running
+    ac.console("[ACRL] Stopping model...")
+
+    ac.setVisible(btn_start, 1)
+    ac.setVisible(btn_stop, 0)
+    model_running = False
