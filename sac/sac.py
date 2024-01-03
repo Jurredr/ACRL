@@ -1,13 +1,11 @@
-import os
 import torch as T
 import torch.nn.functional as F
-import numpy as np
 from buffer import ReplayBuffer
 from networks import ActorNetwork, CriticNetwork, ValueNetwork
 
 
 class Agent():
-    def __init__(self, alpha=0.0003, beta=0.0003, input_dims=[8], env=None, gamma=0.99, n_actions=2, max_size=1000000, tau=0.005, layer1_size=256, layer2_size=256, batch_size=256, reward_scale=2):
+    def __init__(self, alpha=0.0003, beta=0.0003, input_dims=[8], env=None, gamma=0.99, n_actions=2, max_size=1000000, tau=0.005, batch_size=256, reward_scale=2):
         """
         The agent class that will be used to train the agent.
         :param alpha: The learning rate of the actor network (default: 0.0003 from the paper)
@@ -18,8 +16,6 @@ class Agent():
         :param n_actions: The number of actions (default: 2)
         :param max_size: The maximum size of the replay buffer (default: 1000000)
         :param tau: The target value network update rate (soft update, so slightly detune parameters) (default: 0.005)
-        :param layer1_size: The size of the first layer of the networks (default: 256)
-        :param layer2_size: The size of the second layer of the networks (default: 256)
         :param batch_size: The batch size (default: 256)
         :param reward_scale: The scale of the reward (default: 2)
         """

@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions.normal import Normal
-import numpy as np
 
 
 class CriticNetwork(nn.Module):
@@ -230,10 +229,11 @@ class ActorNetwork(nn.Module):
             actions = probabilities.sample()
 
         # The action must be in the range of the maximum action.
-        action = T.tanh(actions) * T.tensor(self.max_action).to(self.device)
+        tanh_actions = T.tanh(actions)
+        action = tanh_actions * T.tensor(self.max_action).to(self.device)
         # The log probability of the action for the loss function for updating the weights of the neural network.
         log_probs = probabilities.log_prob(actions)
-        log_probs -= T.log(1 - action.pow(2) + self.reparam_noise)
+        log_probs -= T.log(1 - tanh_actions.pow(2) + self.reparam_noise)
         log_probs = log_probs.sum(1, keepdim=True)
 
         return action, log_probs
