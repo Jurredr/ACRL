@@ -3,7 +3,7 @@ import os
 import platform
 import struct
 import threading
-import socket
+import pysocket
 import time
 
 # The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
@@ -87,7 +87,7 @@ def socketThread():
     HOST = "127.0.0.1"  # The server's hostname or IP address
     PORT = 65432  # The port used by the server
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    with pysocket.socket(pysocket.AF_INET, pysocket.SOCK_STREAM) as s:
         s.connect((HOST, PORT))
 
         current_time = time.time()
