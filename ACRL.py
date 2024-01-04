@@ -90,8 +90,9 @@ def acUpdate(deltaT):
 
     # Update the model info label
     ac.setText(label_model_info, "Model Running: " + str(model_running) +
-               ("\nEpisode: " + str(episode) if episode > 0 else "Click start to begin!"))
-    ac.log("deltaT: " + str(deltaT) + ", deltaT_total: " + str(deltaT_total))
+               ("\nEpisode: " + str(episode) if episode > 0 else "\nClick start to begin!"))
+    ac.console("deltaT: " + str(deltaT) +
+               ", deltaT_total: " + str(deltaT_total))
 
     # If the model is not running, don't do anything
     if not model_running:
