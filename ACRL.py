@@ -91,8 +91,6 @@ def acUpdate(deltaT):
     # Update the model info label
     ac.setText(label_model_info, "Model Running: " + str(model_running) +
                ("\nEpisode: " + str(episode) if episode > 0 else "\nClick start to begin!"))
-    ac.console("deltaT: " + str(deltaT) +
-               ", deltaT_total: " + str(deltaT_total))
 
     # If the model is not running, don't do anything
     if not model_running:
@@ -110,6 +108,9 @@ def acUpdate(deltaT):
         sendCMD(68)
         # Start the lap + driving
         sendCMD(69)
+
+        ac.console(dir(IS_ACUtil))
+        ac.console(help(IS_ACUtil))
 
     # 1. Get input from the game
     # 2. Send input to the model
