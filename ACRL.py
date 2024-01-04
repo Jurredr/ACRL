@@ -59,7 +59,7 @@ def acMain(ac_version):
 
     # Start button
     btn_start = ac.addButton(APP_WINDOW, "Start Model")
-    ac.setPosition(btn_start, 10, 100)
+    ac.setPosition(btn_start, 20, 100)
     ac.setSize(btn_start, 120, 30)
     ac.addOnClickedListener(btn_start, start)
     ac.setVisible(btn_start, 1)
@@ -101,8 +101,8 @@ def acUpdate(deltaT):
     # Update the total deltaT
     deltaT_total += deltaT
 
-    # If the total deltaT is greater than 1 second, update the model
-    if deltaT_total >= 5000:
+    # If the total deltaT is greater than 6 seconds, respawn
+    if deltaT_total >= 6:
         deltaT_total = 0
         episode += 1
         ac.console("[ACRL] Respawning...")
