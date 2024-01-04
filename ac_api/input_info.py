@@ -1,7 +1,8 @@
 import os
 import sys
-import ac
-import acsys
+import platform
+
+APP_NAME = 'ACRL'
 
 # Add the third party libraries to the path
 try:
@@ -17,6 +18,9 @@ try:
     os.environ['PATH'] += ";."
 except Exception as e:
     ac.log("[ACRL] Error importing libraries: %s" % e)
+
+import ac  # noqa: E402
+import acsys  # noqa: E402
 
 
 def get_gas_input(car: int = 0) -> float:

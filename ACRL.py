@@ -1,6 +1,8 @@
 import sys
 import os
 import platform
+import ac_api.car_info as ci
+import ac_api.lap_info as li
 
 # The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
 APP_NAME = 'ACRL'
@@ -92,6 +94,17 @@ def acUpdate(deltaT):
     ac.setText(label_model_info, "Model Running: " + str(model_running) +
                ("\nEpisode: " + str(episode) if episode > 0 else "\nClick start to begin!"))
 
+    location = ci.get_location()
+    tyres_off = ci.get_tyres_off_track()
+    splits = li.get_splits(0, True)
+    split = li.get_split()
+    invalid = li.get_invalid()
+    ac.console("\n\nLocation: " + str(location))
+    ac.console("Tyres off: " + str(tyres_off))
+    ac.console("Splits: " + str(splits))
+    ac.console("Split: " + str(split))
+    ac.console("Invalid: " + str(invalid))
+
     # If the model is not running, don't do anything
     if not model_running:
         return
@@ -108,9 +121,6 @@ def acUpdate(deltaT):
         sendCMD(68)
         # Start the lap + driving
         sendCMD(69)
-
-        ac.console(dir(IS_ACUtil))
-        ac.console(help(IS_ACUtil))
 
     # 1. Get input from the game
     # 2. Send input to the model
