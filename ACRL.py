@@ -1,8 +1,6 @@
 import sys
 import os
 import platform
-import ac
-from IS_ACUtil import *
 
 # The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
 APP_NAME = 'ACRL'
@@ -21,6 +19,9 @@ try:
     os.environ['PATH'] += ";."
 except Exception as e:
     ac.log("[ACRL] Error importing libraries: %s" % e)
+
+import ac  # noqa: E402
+from IS_ACUtil import *  # noqa: E402
 
 # Model variables
 model_running = False
