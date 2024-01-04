@@ -25,7 +25,7 @@ from IS_ACUtil import *  # noqa: E402
 
 # Model variables
 model_running = False
-episode = 1
+episode = -1
 deltaT_total = 0
 
 # Label & button variables
@@ -53,8 +53,8 @@ def acMain(ac_version):
 
     # Info label
     label_model_info = ac.addLabel(
-        APP_WINDOW, "Model Running: " + str(model_running) + ("\nEpisode: " + str(episode) if episode > 0 else "Click start to begin!"))
-    ac.setPosition(label_model_info, 320/2, 50)
+        APP_WINDOW, "Model Running: " + str(model_running) + "\nClick start to begin!")
+    ac.setPosition(label_model_info, 320/2, 40)
     ac.setFontAlignment(label_model_info, "center")
 
     # Start button
@@ -91,6 +91,7 @@ def acUpdate(deltaT):
     # Update the model info label
     ac.setText(label_model_info, "Model Running: " + str(model_running) +
                ("\nEpisode: " + str(episode) if episode > 0 else "Click start to begin!"))
+    ac.log("deltaT: " + str(deltaT) + ", deltaT_total: " + str(deltaT_total))
 
     # If the model is not running, don't do anything
     if not model_running:
