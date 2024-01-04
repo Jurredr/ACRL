@@ -2,6 +2,7 @@ import sys
 import os
 import platform
 import ac
+from IS_ACUtil import *
 
 # The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
 APP_NAME = 'ACRL'
@@ -21,8 +22,10 @@ try:
 except Exception as e:
     ac.log("[ACRL] Error importing libraries: %s" % e)
 
-# Flag for if the model is running
+# Model variables
 model_running = False
+episode = 1
+deltaT_total = 0
 
 # Label & button variables
 label_model_info = None
@@ -40,7 +43,7 @@ def acMain(ac_version):
 
     # Create the app window
     APP_WINDOW = ac.newApp(APP_NAME)
-    ac.setSize(APP_WINDOW, 320, 130)
+    ac.setSize(APP_WINDOW, 320, 150)
     ac.setTitle(APP_WINDOW, APP_NAME +
                 ": Reinforcement Learning")
 
@@ -49,20 +52,20 @@ def acMain(ac_version):
 
     # Info label
     label_model_info = ac.addLabel(
-        APP_WINDOW, "Model Running: " + str(model_running))
+        APP_WINDOW, "Model Running: " + str(model_running) + ("\nEpisode: " + str(episode) if episode > 0 else "Click start to begin!"))
     ac.setPosition(label_model_info, 320/2, 50)
     ac.setFontAlignment(label_model_info, "center")
 
     # Start button
     btn_start = ac.addButton(APP_WINDOW, "Start Model")
-    ac.setPosition(btn_start, 10, 80)
+    ac.setPosition(btn_start, 10, 100)
     ac.setSize(btn_start, 120, 30)
     ac.addOnClickedListener(btn_start, start)
     ac.setVisible(btn_start, 1)
 
     # Stop button
     btn_stop = ac.addButton(APP_WINDOW, "Stop Model")
-    ac.setPosition(btn_stop, 320/2 + 10, 80)
+    ac.setPosition(btn_stop, 320/2 + 10, 100)
     ac.setSize(btn_stop, 120, 30)
     ac.addOnClickedListener(btn_stop, stop)
     ac.setVisible(btn_stop, 0)
@@ -82,17 +85,30 @@ def acUpdate(deltaT):
     3. Gets output from the model
     4. Sends output to the game
     """
+    global label_model_info, model_running, episode, deltaT_total
 
     # Update the model info label
-    ac.setText(label_model_info, "Model Running: " + str(model_running))
+    ac.setText(label_model_info, "Model Running: " + str(model_running) +
+               ("\nEpisode: " + str(episode) if episode > 0 else "Click start to begin!"))
 
     # If the model is not running, don't do anything
     if not model_running:
         return
 
-    # 1. Get input from the game
-    input = None
+    # Update the total deltaT
+    deltaT_total += deltaT
 
+    # If the total deltaT is greater than 1 second, update the model
+    if deltaT_total >= 5000:
+        deltaT_total = 0
+        episode += 1
+        ac.console("[ACRL] Respawning...")
+        # Restart to session menu
+        sendCMD(68)
+        # Start the lap + driving
+        sendCMD(69)
+
+    # 1. Get input from the game
     # 2. Send input to the model
     # 3. Get output from the model
     # 4. Send output to the game
@@ -113,11 +129,13 @@ def start(*args):
     The function called when the start button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, model_running
+    global btn_start, btn_stop, episode, model_running, deltaT_total
     ac.console("[ACRL] Starting model...")
 
     ac.setVisible(btn_start, 0)
     ac.setVisible(btn_stop, 1)
+    episode = 1
+    deltaT_total = 0
     model_running = True
 
 
@@ -126,9 +144,11 @@ def stop(*args):
     The function called when the stop button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, model_running
+    global btn_start, btn_stop, model_running, deltaT_total, episode
     ac.console("[ACRL] Stopping model...")
 
     ac.setVisible(btn_start, 1)
     ac.setVisible(btn_stop, 0)
     model_running = False
+    deltaT_total = 0
+    episode = -1
