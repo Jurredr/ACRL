@@ -1,8 +1,10 @@
 import sys
 import os
 import platform
-import ac_api.car_info as ci
-import ac_api.lap_info as li
+import struct
+import threading
+import socket
+import time
 
 # The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
 APP_NAME = 'ACRL'
@@ -73,8 +75,33 @@ def acMain(ac_version):
     ac.addOnClickedListener(btn_stop, stop)
     ac.setVisible(btn_stop, 0)
 
+    # Start socket thread
+    t_sock = threading.Thread(target=socketThread)
+    t_sock.start()
+
     ac.console("[ACRL] Initialized")
     return APP_NAME
+
+
+def socketThread():
+    HOST = "127.0.0.1"  # The server's hostname or IP address
+    PORT = 65432  # The port used by the server
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+
+        current_time = time.time()
+        data = struct.pack('!d', current_time)
+        s.sendall(data)
+
+        data = s.recv(1024)
+
+        # Convert the bytes back to a float
+        data = struct.unpack('!d', data)[0]
+
+    current_time = time.time()
+    print("It took", (current_time * 1000 - data * 1000),
+          "ms to get a response from the server.")
 
 
 def acUpdate(deltaT):
@@ -93,17 +120,6 @@ def acUpdate(deltaT):
     # Update the model info label
     ac.setText(label_model_info, "Model Running: " + str(model_running) +
                ("\nEpisode: " + str(episode) if episode > 0 else "\nClick start to begin!"))
-
-    location = ci.get_location()
-    tyres_off = ci.get_tyres_off_track()
-    splits = li.get_splits(0, True)
-    split = li.get_split()
-    invalid = li.get_invalid()
-    ac.console("\n\nLocation: " + str(location))
-    ac.console("Tyres off: " + str(tyres_off))
-    ac.console("Splits: " + str(splits))
-    ac.console("Split: " + str(split))
-    ac.console("Invalid: " + str(invalid))
 
     # If the model is not running, don't do anything
     if not model_running:

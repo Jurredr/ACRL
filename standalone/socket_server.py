@@ -15,8 +15,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             data = conn.recv(1024)
             if not data:
                 break
+
             current_time = time.time()
-            print(current_time)
-            # current time to bytes
+            data = struct.unpack('!d', data)[0]
+            print("It took", (current_time * 1000 - data * 1000),
+                  "ms for the client message to arrive at the server.")
+
             data = struct.pack('!d', current_time)
             conn.sendall(data)
