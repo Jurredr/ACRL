@@ -4,7 +4,7 @@
 
 A Python project that uses the [SAC algorithm](https://arxiv.org/abs/1801.01290) to learn to drive autonomously in Assetto Corsa through Reinforcement Learning.
 
-This project is the bachelor assignment of [Jurre de Ruiter](https://www.jurre.me/), Technical Computer Science student at the [University of Twente](https://www.utwente.nl/en/).
+This project is the bachelor assignment of [Jurre de Ruiter](https://www.jurre.me/) (s2580160), Technical Computer Science student at the [University of Twente](https://www.utwente.nl/en/).
 
 ## Project overview
 
