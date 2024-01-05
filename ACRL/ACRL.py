@@ -2,6 +2,9 @@ import sys
 import os
 import platform
 import socket
+import ac_api.car_info as ci
+import ac_api.input_info as ii
+import ac_api.lap_info as li
 
 # The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
 APP_NAME = 'ACRL'
@@ -103,7 +106,22 @@ def acUpdate(deltaT):
 
     # Send the data to the model
     try:
-        sock.sendall(str.encode(','))
+        # Get the data from the game
+        track_progress = ci.get_location()
+        speed_kmh = ci.get_speed()
+        world_loc = ci.get_world_location()
+        throttle = ii.get_gas_input()
+        brake = ii.get_brake_input()
+        steer = ii.get_steer_input()
+        lap_time = li.get_current_lap_time()
+        lap_invalid = li.get_invalid()
+        lap_count = li.get_lap_count()
+
+        # Turn the data into a string
+        data = "track_progress:" + str(track_progress) + "," + "speed_kmh:" + str(speed_kmh) + "," + "world_loc[0]:" + str(world_loc[0]) + "," + "world_loc[1]:" + str(world_loc[1]) + "," + "world_loc[2]:" + str(world_loc[2]) + "," + "throttle:" + str(
+            throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count)
+        # Send the data in bytes
+        sock.sendall(str.encode(data))
     except:
         ac.console("[ACRL] EXCEPTION: could not send data!")
 
@@ -123,13 +141,11 @@ def start(*args):
     The function called when the start button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, episode, model_running, deltaT_total
+    global btn_start, btn_stop, model_running
     ac.console("[ACRL] Starting model...")
 
     ac.setVisible(btn_start, 0)
     ac.setVisible(btn_stop, 1)
-    episode = 1
-    deltaT_total = 0
     model_running = True
 
 
@@ -138,14 +154,12 @@ def stop(*args):
     The function called when the stop button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, model_running, deltaT_total, episode
+    global btn_start, btn_stop, model_running
     ac.console("[ACRL] Stopping model...")
 
     ac.setVisible(btn_start, 1)
     ac.setVisible(btn_stop, 0)
     model_running = False
-    deltaT_total = 0
-    episode = -1
 
 
 def connect():
@@ -167,6 +181,7 @@ def respawn():
     """
     Respawns the car at the finish line.
     """
+    # TODO; make this a button listener so it can be called from the standalone app's controller
     ac.console("[ACRL] Respawning...")
     # Restart to session menu
     sendCMD(68)

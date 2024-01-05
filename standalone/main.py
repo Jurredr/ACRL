@@ -44,7 +44,7 @@ def main():
             while not episode_done:
                 try:
                     # 3. Get action from the model
-                    action = agent.choose_action(env.observations())
+                    action = agent.choose_action(env.observations.arr())
 
                     # 4. Perform the action in the game
                     controller.perform(action)
@@ -58,8 +58,8 @@ def main():
                     # episode_done = env.episode_done()
 
                     # 7. Save the data to the memory and learn from it
-                    agent.remember(env.observations(), action,
-                                   reward, observation_, episode_done)
+                    agent.remember(env.observations.arr(), action,
+                                   reward, env.next_observations.arr(), episode_done)
                     agent.learn()
 
                     # 8. Update the observation and scores
