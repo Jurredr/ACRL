@@ -1,10 +1,7 @@
 import sys
 import os
 import platform
-import struct
-import threading
 import socket
-import time
 
 # The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
 APP_NAME = 'ACRL'
@@ -29,8 +26,11 @@ from IS_ACUtil import *  # noqa: E402
 
 # Model variables
 model_running = False
-episode = -1
-deltaT_total = 0
+
+# Socket variables
+HOST = "127.0.0.1"  # The server's hostname or IP address
+PORT = 65432  # The port used by the server
+sock = None
 
 # Label & button variables
 label_model_info = None
@@ -75,47 +75,20 @@ def acMain(ac_version):
     ac.addOnClickedListener(btn_stop, stop)
     ac.setVisible(btn_stop, 0)
 
-    # Start socket thread
-    t_sock = threading.Thread(target=socketThread)
-    t_sock.start()
+    # Try to connect to socket
+    connect()
 
     ac.console("[ACRL] Initialized")
     return APP_NAME
 
 
-def socketThread():
-    HOST = "127.0.0.1"  # The server's hostname or IP address
-    PORT = 65432  # The port used by the server
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((HOST, PORT))
-
-        current_time = time.time()
-        data = struct.pack('!d', current_time)
-        s.sendall(data)
-
-        data = s.recv(1024)
-
-        # Convert the bytes back to a float
-        data = struct.unpack('!d', data)[0]
-
-    current_time = time.time()
-    print("It took", (current_time * 1000 - data * 1000),
-          "ms to get a response from the server.")
-
-
 def acUpdate(deltaT):
     """
     The update function of the app, called every frame.
+    Here we get the data from the game, and send it over the socket to the RL model.
     :param deltaT: The time since the last frame as a float.
-
-    In this function, the app:
-    1. Gets input from the game
-    2. Sends input to the model
-    3. Gets output from the model
-    4. Sends output to the game
     """
-    global label_model_info, model_running, episode, deltaT_total
+    global label_model_info, model_running, episode
 
     # Update the model info label
     ac.setText(label_model_info, "Model Running: " + str(model_running) +
@@ -125,24 +98,14 @@ def acUpdate(deltaT):
     if not model_running:
         return
 
-    # Update the total deltaT
-    deltaT_total += deltaT
+    # Try to connect to socket if necessary
+    connect()
 
-    # If the total deltaT is greater than 6 seconds, respawn
-    if deltaT_total >= 6:
-        deltaT_total = 0
-        episode += 1
-        ac.console("[ACRL] Respawning...")
-        # Restart to session menu
-        sendCMD(68)
-        # Start the lap + driving
-        sendCMD(69)
-
-    # 1. Get input from the game
-    # 2. Send input to the model
-    # 3. Get output from the model
-    # 4. Send output to the game
-    pass
+    # Send the data to the model
+    try:
+        sock.sendall(str.encode(','))
+    except:
+        ac.console("[ACRL] EXCEPTION: could not send data!")
 
 
 def acShutdown():
@@ -151,6 +114,7 @@ def acShutdown():
     """
     global model_running
     model_running = False
+    sock.close()
     ac.console("[ACRL] Shutting down...")
 
 
@@ -182,3 +146,29 @@ def stop(*args):
     model_running = False
     deltaT_total = 0
     episode = -1
+
+
+def connect():
+    """
+    Connects to the socket server.
+    """
+    global sock
+    if sock is None:
+        try:
+            # try connecting to socket server
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((HOST, PORT))
+            ac.console("[ACRL] Socket connection successful!")
+        except:
+            ac.console("[ACRL] Socket could not connect to host...")
+
+
+def respawn():
+    """
+    Respawns the car at the finish line.
+    """
+    ac.console("[ACRL] Respawning...")
+    # Restart to session menu
+    sendCMD(68)
+    # Start the lap + driving
+    sendCMD(69)
