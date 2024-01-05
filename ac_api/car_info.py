@@ -1,8 +1,8 @@
-from sim_info import info
 import os
 import sys
-import ac
-import acsys
+import platform
+
+APP_NAME = 'ACRL'
 
 # Add the third party libraries to the path
 try:
@@ -18,6 +18,10 @@ try:
     os.environ['PATH'] += ";."
 except Exception as e:
     ac.log("[ACRL] Error importing libraries: %s" % e)
+
+import ac  # noqa: E402
+import acsys  # noqa: E402
+from sim_info import info  # noqa: E402
 
 
 def format_time(millis: int) -> str:
@@ -54,8 +58,8 @@ def get_delta_to_car_ahead(formatted: bool = False):
     :param formatted: true if format should be in readable str
     :return: delta to car ahead in calculated time distance (float) or string format
     """
-    import functions.session_info as si
-    import functions.lap_info as li
+    import ac_api.session_info as si
+    import ac_api.lap_info as li
     time = 0
     dist = 0
     track_len = si.get_track_length()
@@ -93,8 +97,8 @@ def get_delta_to_car_behind(formatted: bool = False):
     :param formatted: true if format should be in readable str
     :return: delta to car behind in calculated time distance (float) or string format
     """
-    import functions.session_info as si
-    import functions.lap_info as li
+    import ac_api.session_info as si
+    import ac_api.lap_info as li
     time = 0
     dist = 0
     track_len = si.get_track_length()

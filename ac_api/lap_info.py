@@ -1,8 +1,8 @@
 import os
 import sys
-import ac
-import acsys
-from sim_info import info
+import platform
+
+APP_NAME = 'ACRL'
 
 # Add the third party libraries to the path
 try:
@@ -18,6 +18,10 @@ try:
     os.environ['PATH'] += ";."
 except Exception as e:
     ac.log("[ACRL] Error importing libraries: %s" % e)
+
+import ac  # noqa: E402
+import acsys  # noqa: E402
+from sim_info import info  # noqa: E402
 
 
 def format_time(millis: int) -> str:
@@ -119,7 +123,7 @@ def get_invalid(car: int = 0) -> bool:
     :param car: the car selected (user is 0)
     :return: Invalid lap in boolean form
     """
-    import functions.car_info as ci
+    import ac_api.car_info as ci
 
     return ac.getCarState(car, acsys.CS.LapInvalidated) or ci.get_tyres_off_track() > 2
 
