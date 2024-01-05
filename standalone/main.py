@@ -1,5 +1,8 @@
+import numpy as np
+from standalone.ac_controller import ACController
 from standalone.ac_socket import ACSocket
-from standalone.game_state import GameState
+from standalone.ac_environment import ACEnvironment
+from standalone.sac.sac import Agent
 
 
 def main():
@@ -7,40 +10,80 @@ def main():
     The main function of the standalone application.
     It connects to the Assetto Corsa app, gets data, sends it to the model, and sends the output actions back to the game.
     """
-    # 1. Initialize the game_state object
-    game_state = GameState()
+    # Scores and amount of episodes to run
+    best_score = 0  # env.reward_range[0]
+    score_history = []
+    n_episodes = 500
 
-    # TODO: 2. Initialize the model
-    # env = gym.make('InvertedPendulumBulletEnv-v0')
-    # agent = Agent(input_dims=env.observation_space.shape, env=env,
-    #         n_actions=env.action_space.shape[0])
+    # TODO: Initialize the agent, how do we pass the observation space and action space here?
+    # https://github.com/philtabor/Youtube-Code-Repository/blob/master/ReinforcementLearning/PolicyGradient/SAC/main_sac.py
+    # agent = Agent(input_dims=env.observation_space.shape,
+    #               env=env, n_actions=env.action_space.shape[0])
+    agent = Agent()
 
-    # 3. Establish socket connection
+    # Initialize the controller
+    controller = ACController()
+
+    # Establish a socket connection
     sock = ACSocket()
 
-    # 4 Loop until the socket is closed or the program is terminated
+    # Loop until the socket is closed or the program is terminated
     with sock.connect() as conn:
-        while True:
-            try:
-                # 5. Get data from the socket
-                sock.update()
 
-                # 6. Update the game_state object with the new data
-                game_state.update(sock.data)
+        # Loop episodes
+        for i in range(n_episodes):
+            step = 0
+            score = 0
+            episode_done = False
 
-                # TODO: 7. Get action from the model
-                # action = agent.choose_action(observation)
-                # observation_, reward, done, info = env.step(action)
-                # agent.remember(observation, action, reward, observation_, done)
-                # agent.learn()
+            # 1. Get the initial observation from the game and initialize the environment
+            sock.update()
+            env = ACEnvironment(sock.data)
 
-                # TODO: 9. Send the model's output to the controller
-                # controller.send(action)
-            except:
-                sock.on_close()
-                # TODO: save & close the model
-                # agent.save_models()
-                break
+            # 2. Loop actions-observations until the episode is done
+            while not episode_done:
+                try:
+                    # 3. Get action from the model
+                    action = agent.choose_action(env.observations())
+
+                    # 4. Perform the action in the game
+                    controller.perform(action)
+
+                    # 5. Get the new observation from the game
+                    sock.update()
+                    env.update(sock.data, next=True)
+
+                    # TODO 6. Get the reward and whether the episode is done
+                    # reward = env.get_reward()
+                    # episode_done = env.episode_done()
+
+                    # 7. Save the data to the memory and learn from it
+                    agent.remember(env.observations(), action,
+                                   reward, observation_, episode_done)
+                    agent.learn()
+
+                    # 8. Update the observation and scores
+                    env.progress()
+                    score += reward
+                    score_history.append(score)
+                    avg_score = np.mean(score_history[-100:])
+                    if avg_score > best_score:
+                        best_score = avg_score
+                        agent.save_models()
+
+                    print('episode ', i, ' step ', step, 'score %.1f' %
+                          score, 'avg_score %.1f' % avg_score)
+                    step += 1
+                except:
+                    sock.on_close()
+                    agent.save_models()
+                    break
+
+            # 9. Reset the car back to the start
+            controller.reset_car()
+
+            print("Episode {} finished after {} steps with score {}".format(
+                i, step, score))
 
 
 if __name__ == "__main__":
