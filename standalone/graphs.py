@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 def plot_learning_curve(n_games, scores, figure_file):
     """
     Plot the learning curve of the agent.
-
     :param n_games: The number of games played.
     :param scores: The scores of the games.
     :param figure_file: The file to save the figure to.

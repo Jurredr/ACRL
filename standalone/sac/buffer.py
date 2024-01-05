@@ -2,10 +2,13 @@ import numpy as np
 
 
 class ReplayBuffer():
+    """
+    The replay buffer class, used to store the experiences of the agent.
+    """
 
     def __init__(self, max_size, input_shape, n_actions):
         """
-        The replay buffer class, used to store the experiences of the agent.
+        Initialize the replay buffer.
         :param max_size: The maximum size of the buffer.
         :param input_shape: The shape of the input.
         :param n_actions: The number of actions.
@@ -25,14 +28,14 @@ class ReplayBuffer():
         # The terminal memory; stores whether the episode ended
         self.terminal_memory = np.zeros(self.mem_size, dtype=np.bool)
 
-    def store_transition(self, state, action, reward, state_, done):
+    def store_transition(self, state, action, reward, state_, episode_done):
         """
         Stores a transition in the replay buffer.
         :param state: The current state.
         :param action: The action taken.
         :param reward: The reward received.
         :param state_: The next state.
-        :param done: Whether the episode ended.
+        :param episode_done: Whether the episode is done.
         """
         # Get the index to store the transition
         index = self.mem_cntr % self.mem_size
@@ -42,7 +45,7 @@ class ReplayBuffer():
         self.new_state_memory[index] = state_
         self.action_memory[index] = action
         self.reward_memory[index] = reward
-        self.terminal_memory[index] = done
+        self.terminal_memory[index] = episode_done
 
         # Increment the memory counter
         self.mem_cntr += 1

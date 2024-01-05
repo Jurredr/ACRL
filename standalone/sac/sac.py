@@ -5,9 +5,13 @@ from networks import ActorNetwork, CriticNetwork, ValueNetwork
 
 
 class Agent():
+    """
+    The agent class that will be used to train the agent.
+    """
+
     def __init__(self, alpha=0.0003, beta=0.0003, input_dims=[8], env=None, gamma=0.99, n_actions=2, max_size=1000000, tau=0.005, batch_size=256, reward_scale=2):
         """
-        The agent class that will be used to train the agent.
+        Initialize the agent.
         :param alpha: The learning rate of the actor network (default: 0.0003 from the paper)
         :param beta: The learning rate of the critic network (default: 0.0003 from the paper)
         :param input_dims: The dimensions of the input
@@ -61,7 +65,7 @@ class Agent():
         # Convert the action to a numpy array
         return actions.cpu().detach().numpy()[0]
 
-    def remember(self, state, action, reward, new_state, done):
+    def remember(self, state, action, reward, new_state, episode_done):
         """
         Interface function between the agent and its memory.
         :param state: The state of the environment
@@ -70,7 +74,8 @@ class Agent():
         :param new_state: The new state of the environment
         :param done: Whether the episode is done or not
         """
-        self.memory.store_transition(state, action, reward, new_state, done)
+        self.memory.store_transition(
+            state, action, reward, new_state, episode_done)
 
     def update_network_parameters(self, tau=None):
         """

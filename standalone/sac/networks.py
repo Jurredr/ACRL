@@ -7,9 +7,13 @@ from torch.distributions.normal import Normal
 
 
 class CriticNetwork(nn.Module):
+    """
+    The critic network.
+    """
+
     def __init__(self, beta, input_dims, n_actions, fc1_dims=256, fc2_dims=256, name='critic', chkpt_dir='tmp/sac'):
         """
-        The critic network.
+        Initialize the critic network.
         :param beta: The learning rate.
         :param input_dims: The input dimensions.
         :param n_actions: The number of actions.
@@ -81,9 +85,13 @@ class CriticNetwork(nn.Module):
 
 
 class ValueNetwork(nn.Module):
+    """
+    The value network.
+    """
+
     def __init__(self, beta, input_dims, fc1_dims=256, fc2_dims=256, name='value', chkpt_dir='tmp/sac'):
         """
-        The value network.
+        Initialize the value network.
         :param beta: The learning rate.
         :param input_dims: The input dimensions.
         :param fc1_dims: The number of neurons in the first fully connected layer.  (default: 256 as per the paper)
@@ -115,6 +123,12 @@ class ValueNetwork(nn.Module):
         self.to(self.device)
 
     def forward(self, state):
+        """
+        The forward pass of the network;
+        How we feed a state through the network.
+        :param state: The state of the environment.
+        :return: The value.
+        """
         state_value = self.fc1(state)
         # Activate the first fully connected layer.
         state_value = F.relu(state_value)
@@ -145,9 +159,13 @@ class ValueNetwork(nn.Module):
 
 
 class ActorNetwork(nn.Module):
+    """
+    The actor network.
+    """
+
     def __init__(self, alpha, input_dims, max_action, fc1_dims=256, fc2_dims=256, n_actions=2, name='actor', chkpt_dir='tmp/sac'):
         """
-        The actor network.
+        Initialize the actor network.
         :param alpha: The learning rate.
         :param input_dims: The input dimensions.
         :param max_action: The maximum action.

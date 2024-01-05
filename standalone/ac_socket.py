@@ -15,7 +15,6 @@ class ACSocket:
     def __init__(self, host: str = "127.0.0.1", port: int = 65431) -> None:
         """
         Set up the socket connection.
-
         :param host: The host to connect to (default: localhost)
         :param port: The port to connect to (default: 65431)
         """
