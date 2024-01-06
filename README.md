@@ -21,7 +21,7 @@ The project consists of two main components:
     - Install the [Python 3.5.1](https://www.python.org/downloads/release/python-351/) interpreter. This is what Assetto Corsa uses and we need this locally for the socket import to not throw errors in AC. Make sure to add Python to your [PATH environment variable](https://www.pythoncentral.io/add-python-to-path-python-is-not-recognized-as-an-internal-or-external-command/).
     - Copy the `ACRL` folder to the `apps/python` folder in your Assetto Corsa installation directory. (e.g. `C:\Program Files (x86)\Steam\steamapps\common\assettocorsa\apps\python`)
     - Run Assetto Corsa and enable the `ACRL` app in the `General` tab of the `Settings` menu. (You can also enable it through the `Content Manager` settings, or in the `Custom Shaders Patch` tab if you have CSP installed).
-4. Getting the Python project working:
+4. Getting the standalone Python project working:
     - Install the latest Python interpreter (as of writing this: [Python 3.12.1](https://www.python.org/downloads/release/python-3121/)). This is what we use for the part of the project that runs outside of AC.
     - Install the required Python packages by running `pip install -r requirements.txt` in the root of the `/standalone` directory.
 5. Set up a new session in Assetto Corsa through Content Manager:
