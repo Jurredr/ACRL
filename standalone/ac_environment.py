@@ -10,18 +10,22 @@ class ACEnvironment:
     observations = None
     next_observations = None
 
-    def __init__(self, data):
+    def __init__(self, data, max_speed=200.0, lap_completion_bonus=1.0, off_track_penalty=-0.5):
         """
         Initialize the environment with the initial data from the socket.
-
         :param data: The data received from the socket in bytes.
+        :param max_speed: The maximum speed of the car in km/h.
+        :param lap_completion_bonus: The bonus reward for completing a lap.
+        :param off_track_penalty: The penalty for going off track.
         """
+        self.max_speed = max_speed
+        self.lap_completion_bonus = lap_completion_bonus
+        self.off_track_penalty = off_track_penalty
         self.observations = self.update(data)
 
     def update(self, data, next=False):
         """
         Update the game state with the latest data from the socket.
-
         :param data: The data received from the socket in bytes.
         :param next: Whether the next_observations should be updated.
         """
@@ -39,6 +43,40 @@ class ACEnvironment:
         self.observations = self.next_observations
         self.next_observations = None
 
+    def get_reward(self):
+        """
+        Get the reward from the current environment observations.
+        :return: The reward.
+        """
+        # Reward for how far the car has come on the track
+        progress_reward = self.next_observations.track_progress
+
+        # Give a reward for the current speed, going faster is better for the lap time
+        speed_reward = self.next_observations.speed_kmh / \
+            self.max_speed  # Normalize speed to [0, 1]
+
+        # Penalty for Going Off Track
+        off_track_penalty = self.off_track_penalty if self.next_observations.lap_invalid else 0.0
+
+        # Lap completion bonus; an extra bonus for actually reaching the finish line
+        lap_completion_reward = self.lap_completion_bonus if self.next_observations.lap_count > 0 else 0.0
+
+        # Combine individual rewards
+        total_reward = lap_completion_reward + \
+            progress_reward + speed_reward + off_track_penalty
+
+        # TODO; is this correct? Clip the total reward to be within [-1, 1]
+        total_reward = max(-1.0, min(total_reward, 1.0))
+        return total_reward
+
+    def episode_done(self, timeout=60*1000):
+        """
+        Check whether an episode is finished with the current environment states.
+        :param timeout: The timeout in ms after which an episode has taken too long (it took too long to reach the finish line).
+        :return: Whether the episode is done.
+        """
+        return self.observations.lap_invalid or self.observations.lap_count > 0 or self.observations.track_progress == 1.0 or self.observations.lap_time >= timeout
+
 
 class ACObservation:
     """
@@ -48,7 +86,6 @@ class ACObservation:
     def __init__(self, data):
         """
         Initialize the environment with observation data.
-
         :param data: The data in bytes.
         """
         self.update(data)
@@ -56,7 +93,6 @@ class ACObservation:
     def update(self, data):
         """
         Update the observation data states from bytes to the correct types.
-
         :param data: The data in bytes.
         """
         # Convert the byte data to a string
@@ -79,7 +115,6 @@ class ACObservation:
     def arr(self):
         """
         Get the observations from the game state.
-
         :return: The observations in a numpy array.
         """
         return np.array([self.track_progress, self.speed_kmh, self.world_loc, self.throttle, self.brake, self.steer, self.lap_time, self.lap_invalid, self.lap_count])

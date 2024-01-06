@@ -11,9 +11,10 @@ def main():
     It connects to the Assetto Corsa app, gets data, sends it to the model, and sends the output actions back to the game.
     """
     # Scores and amount of episodes to run
-    best_score = 0  # env.reward_range[0]
+    best_score = 0  # TODO; shouldn't this be -1.0? env.reward_range[0]
     score_history = []
     n_episodes = 500
+    TIMEOUT = 100*1000
 
     # TODO: Initialize the agent, how do we pass the observation space and action space here?
     # https://github.com/philtabor/Youtube-Code-Repository/blob/master/ReinforcementLearning/PolicyGradient/SAC/main_sac.py
@@ -53,9 +54,9 @@ def main():
                     sock.update()
                     env.update(sock.data, next=True)
 
-                    # TODO 6. Get the reward and whether the episode is done
-                    # reward = env.get_reward()
-                    # episode_done = env.episode_done()
+                    # 6. Get the reward and whether the episode is done
+                    reward = env.get_reward()
+                    episode_done = env.episode_done(timeout=TIMEOUT)
 
                     # 7. Save the data to the memory and learn from it
                     agent.remember(env.observations.arr(), action,
