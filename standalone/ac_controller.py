@@ -1,5 +1,6 @@
 import time
 import vgamepad
+import keyboard
 
 
 class ACController:
@@ -37,7 +38,5 @@ class ACController:
         """
         Reset the car back to the starting line.
         """
-        # TODO: set the right buttons here, corresponding to a respawn command in the AC app
-        # self.gamepad.press_button(vgamepad.BUTTON_B)
-        # self.gamepad.release_button(vgamepad.BUTTON_B)
-        # self.gamepad.update()
+        # Press the F10 key on the keyboard to trigger a respawn in the AC app
+        keyboard.press_and_release('F10')
