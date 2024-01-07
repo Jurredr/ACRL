@@ -152,7 +152,7 @@ def start(*args):
     The function called when the start button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, training
+    global btn_start, btn_stop, training, connected
     if not connect():
         ac.console("[ACRL] Didn't start model, could not connect to socket!")
         connected = False
