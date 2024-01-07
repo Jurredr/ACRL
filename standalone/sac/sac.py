@@ -1,7 +1,7 @@
 import torch as T
 import torch.nn.functional as F
-from buffer import ReplayBuffer
-from networks import ActorNetwork, CriticNetwork, ValueNetwork
+from sac.buffer import ReplayBuffer
+from sac.networks import ActorNetwork, CriticNetwork, ValueNetwork
 
 
 class Agent():
@@ -105,7 +105,7 @@ class Agent():
         """
         Save the models.
         """
-        print('... saving all models ...')
+        print('[ACRL] ... saving all models ...')
         self.actor.save_checkpoint()
         self.value.save_checkpoint()
         self.target_value.save_checkpoint()
@@ -116,7 +116,7 @@ class Agent():
         """
         Load the models.
         """
-        print('... loading all models ...')
+        print('[ACRL] ... loading all models ...')
         self.actor.load_checkpoint()
         self.value.load_checkpoint()
         self.target_value.load_checkpoint()

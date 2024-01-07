@@ -1,8 +1,8 @@
 import numpy as np
-from standalone.ac_controller import ACController
-from standalone.ac_socket import ACSocket
-from standalone.ac_environment import ACEnvironment
-from standalone.sac.sac import Agent
+from ac_controller import ACController
+from ac_socket import ACSocket
+from ac_environment import ACEnvironment
+from sac.sac import Agent
 
 
 def main():
@@ -72,7 +72,7 @@ def main():
                         best_score = avg_score
                         agent.save_models()
 
-                    print('episode ', i, ' step ', step, 'score %.1f' %
+                    print('[ACRL] Episode ', i, ' step ', step, 'score %.1f' %
                           score, 'avg_score %.1f' % avg_score)
                     step += 1
                 except:
@@ -83,7 +83,7 @@ def main():
             # 9. Reset the car back to the start
             controller.reset_car()
 
-            print("Episode {} finished after {} steps with score {}".format(
+            print("[ACRL] Episode {} finished after {} steps with score {}".format(
                 i, step, score))
 
 

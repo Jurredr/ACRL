@@ -23,14 +23,14 @@ class ACSocket:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((host, port))
         self.sock.listen()
-        print("Socket listening on", (host, port))
+        print("[ACRL] Socket listening on", (host, port))
 
     def connect(self) -> socket:
         """
         Wait for an incoming connection and return the socket object.
         """
         self.conn, self.addr = self.sock.accept()
-        print("Connected by", self.addr)
+        print("[ACRL] Connected by", self.addr)
         return self.conn
 
     def update(self) -> None:
@@ -39,14 +39,14 @@ class ACSocket:
         """
         try:
             self.data = self.conn.recv(1024)
-            print("Received data from client")
+            print("[ACRL] Received data from client")
         except:
-            print("No data received from client, closing socket connection")
+            print("[ACRL] No data received from client, closing socket connection")
             self.on_close()
 
     def on_close(self) -> None:
         """
         Ensure socket is properly closed before terminating program.
         """
-        print("Closing socket connection")
+        print("[ACRL] Closing socket connection")
         self.sock.close()

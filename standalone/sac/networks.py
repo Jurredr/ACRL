@@ -73,14 +73,16 @@ class CriticNetwork(nn.Module):
         """
         Saves the network to a checkpoint.
         """
-        print('... saving critic checkpoint "{}" ...'.format(self.checkpoint_file))
+        print('[ACRL] ... saving critic checkpoint "{}" ...'.format(
+            self.checkpoint_file))
         T.save(self.state_dict(), self.checkpoint_file)
 
     def load_checkpoint(self):
         """
         Loads the network from a checkpoint.
         """
-        print('... loading critic checkpoint "{}" ...'.format(self.checkpoint_file))
+        print('[ACRL] ... loading critic checkpoint "{}" ...'.format(
+            self.checkpoint_file))
         self.load_state_dict(T.load(self.checkpoint_file))
 
 
@@ -147,14 +149,16 @@ class ValueNetwork(nn.Module):
         """
         Saves the network to a checkpoint.
         """
-        print('... saving value checkpoint "{}" ...'.format(self.checkpoint_file))
+        print('[ACRL] ... saving value checkpoint "{}" ...'.format(
+            self.checkpoint_file))
         T.save(self.state_dict(), self.checkpoint_file)
 
     def load_checkpoint(self):
         """
         Loads the network from a checkpoint.
         """
-        print('... loading value checkpoint "{}" ...'.format(self.checkpoint_file))
+        print('[ACRL] ... loading value checkpoint "{}" ...'.format(
+            self.checkpoint_file))
         self.load_state_dict(T.load(self.checkpoint_file))
 
 
@@ -260,12 +264,14 @@ class ActorNetwork(nn.Module):
         """
         Saves the network to a checkpoint.
         """
-        print('... saving actor checkpoint "{}" ...'.format(self.checkpoint_file))
+        print('[ACRL] ... saving actor checkpoint "{}" ...'.format(
+            self.checkpoint_file))
         T.save(self.state_dict(), self.checkpoint_file)
 
     def load_checkpoint(self):
         """
         Loads the network from a checkpoint.
         """
-        print('... loading actor checkpoint "{}" ...'.format(self.checkpoint_file))
+        print('[ACRL] ... loading actor checkpoint "{}" ...'.format(
+            self.checkpoint_file))
         self.load_state_dict(T.load(self.checkpoint_file))
