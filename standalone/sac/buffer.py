@@ -26,7 +26,7 @@ class ReplayBuffer():
         # The reward memory; stores the rewards received
         self.reward_memory = np.zeros(self.mem_size)
         # The terminal memory; stores whether the episode ended
-        self.terminal_memory = np.zeros(self.mem_size, dtype=np.bool)
+        self.terminal_memory = np.zeros(self.mem_size, dtype=bool)
 
     def store_transition(self, state, action, reward, state_, episode_done):
         """
