@@ -84,9 +84,6 @@ def acMain(ac_version):
     ac.addOnClickedListener(btn_stop, stop)
     ac.setVisible(btn_stop, 0)
 
-    # Try to connect to socket
-    connect()
-
     # Start the respawn listener
     t_res = threading.Thread(target=respawn_listener)
     t_res.start()
@@ -173,8 +170,10 @@ def stop(*args):
     The function called when the stop button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, training
+    global btn_start, btn_stop, training, sock, connected
     ac.console("[ACRL] Stopping model...")
+    sock.close()
+    connected = False
 
     ac.setVisible(btn_start, 1)
     ac.setVisible(btn_stop, 0)
@@ -185,8 +184,12 @@ def connect():
     """
     Attempts to connect to the socket server.
     """
+    global sock, connected
+    if connected:
+        return True
     try:
         sock.connect((HOST, PORT))
+        connected = True
         ac.console("[ACRL] Socket connection successful!")
         return True
     except:
