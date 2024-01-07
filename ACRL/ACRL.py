@@ -27,13 +27,14 @@ except Exception as e:
 import ac  # noqa: E402
 from IS_ACUtil import *  # noqa: E402
 
-# Model variables
-model_running = False
+# Training enabled flag
+training = False
 
 # Socket variables
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 65432  # The port used by the server
-sock = None
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+connected = False
 
 # Label & button variables
 label_model_info = None
@@ -60,7 +61,7 @@ def acMain(ac_version):
 
     # Info label
     label_model_info = ac.addLabel(
-        APP_WINDOW, "Model Running: " + str(model_running) + "\nClick start to begin!")
+        APP_WINDOW, "Training: " + str(training) + "\nClick start to begin!")
     ac.setPosition(label_model_info, 320/2, 40)
     ac.setFontAlignment(label_model_info, "center")
 
@@ -91,18 +92,21 @@ def acUpdate(deltaT):
     Here we get the data from the game, and send it over the socket to the RL model.
     :param deltaT: The time since the last frame as a float.
     """
-    global label_model_info, model_running, episode
+    global label_model_info, training
 
     # Update the model info label
-    ac.setText(label_model_info, "Model Running: " + str(model_running) +
-               ("\nEpisode: " + str(episode) if episode > 0 else "\nClick start to begin!"))
+    ac.setText(label_model_info, "Training: " + str(training))
 
-    # If the model is not running, don't do anything
-    if not model_running:
+    # If not training, don't do anything
+    if not training:
         return
 
-    # Try to connect to socket if necessary
-    connect()
+    # If the socket is not connected, try to connect
+    if not connect():
+        ac.console(
+            "[ACRL] Socket could not connect to host in acUpdate, stopping training!")
+        stop()
+        return
 
     # Send the data to the model
     try:
@@ -122,16 +126,17 @@ def acUpdate(deltaT):
             throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count)
         # Send the data in bytes
         sock.sendall(str.encode(data))
-    except:
+    except Exception as e:
         ac.console("[ACRL] EXCEPTION: could not send data!")
+        ac.console(e)
 
 
 def acShutdown():
     """
     The shutdown function of the app, called on app close.
     """
-    global model_running
-    model_running = False
+    global training
+    training = False
     sock.close()
     ac.console("[ACRL] Shutting down...")
 
@@ -141,12 +146,17 @@ def start(*args):
     The function called when the start button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, model_running
+    global btn_start, btn_stop, training
+    if not connect():
+        ac.console("[ACRL] Didn't start model, could not connect to socket!")
+        stop()
+        return
+
     ac.console("[ACRL] Starting model...")
 
     ac.setVisible(btn_start, 0)
     ac.setVisible(btn_stop, 1)
-    model_running = True
+    training = True
 
 
 def stop(*args):
@@ -154,27 +164,25 @@ def stop(*args):
     The function called when the stop button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, model_running
+    global btn_start, btn_stop, training
     ac.console("[ACRL] Stopping model...")
 
     ac.setVisible(btn_start, 1)
     ac.setVisible(btn_stop, 0)
-    model_running = False
+    training = False
 
 
 def connect():
     """
-    Connects to the socket server.
+    Attempts to connect to the socket server.
     """
-    global sock
-    if sock is None:
-        try:
-            # try connecting to socket server
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((HOST, PORT))
-            ac.console("[ACRL] Socket connection successful!")
-        except:
-            ac.console("[ACRL] Socket could not connect to host...")
+    try:
+        sock.connect((HOST, PORT))
+        ac.console("[ACRL] Socket connection successful!")
+        return True
+    except:
+        ac.console("[ACRL] Socket could not connect to host...")
+        return False
 
 
 def respawn():
