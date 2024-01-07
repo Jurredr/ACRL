@@ -112,6 +112,9 @@ class ACObservation:
         self.lap_invalid = bool(data_dict['lap_invalid'])
         self.lap_count = int(data_dict['lap_count'])
 
+        print('thr: ', self.throttle, ' brk: ',
+              self.brake, ' str: ', self.steer)
+
     def arr(self):
         """
         Get the observations from the game state.
