@@ -1,3 +1,4 @@
+cmake==3.28.1
 numpy==1.26.3
 torch==2.1.2
 keyboard==0.13.5
