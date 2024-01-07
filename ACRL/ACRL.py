@@ -2,6 +2,7 @@ import sys
 import os
 import platform
 import socket
+import threading
 import ac_api.car_info as ci
 import ac_api.input_info as ii
 import ac_api.lap_info as li
@@ -36,6 +37,10 @@ PORT = 65432  # The port used by the server
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 connected = False
 
+# Respawn thread
+t_res = None
+RES_KEY = 121  # F10
+
 # Label & button variables
 label_model_info = None
 btn_start = None
@@ -47,7 +52,7 @@ def acMain(ac_version):
     The main function of the app, called on app start.
     :param ac_version: The version of Assetto Corsa as a string.
     """
-    global label_model_info, btn_start, btn_stop
+    global label_model_info, btn_start, btn_stop, t_res
     ac.console("[ACRL] Initializing...")
 
     # Create the app window
@@ -81,6 +86,10 @@ def acMain(ac_version):
 
     # Try to connect to socket
     connect()
+
+    # Start the respawn listener
+    t_res = threading.Thread(target=respawn_listener)
+    t_res.start()
 
     ac.console("[ACRL] Initialized")
     return APP_NAME
@@ -185,13 +194,14 @@ def connect():
         return False
 
 
-def respawn():
+def respawn_listener():
     """
-    Respawns the car at the finish line.
+    Listens for particular key press and will respawn the car at the finish line when pressed.
     """
-    # TODO; make this a button listener so it can be called from the standalone app's controller
-    ac.console("[ACRL] Respawning...")
-    # Restart to session menu
-    sendCMD(68)
-    # Start the lap + driving
-    sendCMD(69)
+    while True:
+        if getKeyState(RES_KEY):
+            ac.console("[ACRL] Respawning...")
+            # Restart to session menu
+            sendCMD(68)
+            # Start the lap + driving
+            sendCMD(69)
