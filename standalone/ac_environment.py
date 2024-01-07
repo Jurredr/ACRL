@@ -75,6 +75,8 @@ class ACEnvironment:
         :param timeout: The timeout in ms after which an episode has taken too long (it took too long to reach the finish line).
         :return: Whether the episode is done.
         """
+        if not self.next_observations or not self.observations:
+            return False
         return self.observations.lap_invalid or self.observations.lap_count > 0 or self.observations.track_progress == 1.0 or self.observations.lap_time >= timeout
 
 
