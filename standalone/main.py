@@ -11,7 +11,7 @@ def main():
     It connects to the Assetto Corsa app, gets data, sends it to the model, and sends the output actions back to the game.
     """
     # Scores and amount of episodes to run
-    best_score = 0  # TODO; shouldn't this be -1.0? env.reward_range[0]
+    best_score = -1.0  # TODO; what should this start as? env.reward_range[0]
     score_history = []
     n_episodes = 500
     TIMEOUT = 100*1000
