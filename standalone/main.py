@@ -14,6 +14,8 @@ def main():
     best_score = -1.0  # TODO; what should this start as? env.reward_range[0]
     score_history = []
     n_episodes = 500
+
+    # 100 seconds timeout for each episode
     TIMEOUT = 100*1000
 
     # TODO: Initialize the agent, how do we pass the observation space and action space here?
