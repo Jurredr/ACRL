@@ -1,8 +1,10 @@
+import struct
 import sys
 import os
 import platform
 import socket
 import threading
+import time
 import ac_api.car_info as ci
 import ac_api.input_info as ii
 import ac_api.lap_info as li
@@ -87,6 +89,9 @@ def acMain(ac_version):
     # Start the respawn listener
     t_res = threading.Thread(target=respawn_listener)
     t_res.start()
+
+    t_sock = threading.Thread(target=socketThread)
+    t_sock.start()
 
     ac.console("[ACRL] Initialized")
     return APP_NAME
@@ -209,3 +214,12 @@ def respawn_listener():
             sendCMD(68)
             # Start the lap + driving
             sendCMD(69)
+
+
+def socketThread():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+
+        current_time = time.time()
+        data = struct.pack('!d', current_time)
+        s.sendall(data)
