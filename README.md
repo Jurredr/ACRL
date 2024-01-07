@@ -31,4 +31,4 @@ The project consists of two main components:
     - Turn on `penalties` and `ideal conditions`
 6. Start the session and wait for the car to spawn on the track.
 7. Run the `standalone/main.py` file to start listening for an incoming connection from Assetto Corsa.
-8. Start training by clicking the `Start Model` button in the ACRL app window in Assetto Corsa. The car should start driving around the track and the model should start training. You can monitor the training progress in the console window where you started the `main.py` script.
+8. Start training by clicking the `Start Training` button in the ACRL app window in Assetto Corsa. The car should start driving around the track and the model should start training. You can monitor the training progress in the console window where you started the `main.py` script.
