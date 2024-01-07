@@ -155,7 +155,8 @@ def start(*args):
     global btn_start, btn_stop, training
     if not connect():
         ac.console("[ACRL] Didn't start model, could not connect to socket!")
-        stop()
+        connected = False
+        training = False
         return
 
     ac.console("[ACRL] Starting model...")
