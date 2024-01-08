@@ -114,27 +114,22 @@ def acUpdate(deltaT):
         stop()
         return
 
-    # Send the data to the model
-    try:
-        # Get the data from the game
-        track_progress = ci.get_location()
-        speed_kmh = ci.get_speed()
-        world_loc = ci.get_world_location()
-        throttle = ii.get_gas_input()
-        brake = ii.get_brake_input()
-        steer = ii.get_steer_input()
-        lap_time = li.get_current_lap_time()
-        lap_invalid = li.get_invalid()
-        lap_count = li.get_lap_count()
+    # Get the data from the game
+    track_progress = ci.get_location()
+    speed_kmh = ci.get_speed()
+    world_loc = ci.get_world_location()
+    throttle = ii.get_gas_input()
+    brake = ii.get_brake_input()
+    steer = ii.get_steer_input()
+    lap_time = li.get_current_lap_time()
+    lap_invalid = li.get_invalid()
+    lap_count = li.get_lap_count()
 
-        # Turn the data into a string
-        data = "track_progress:" + str(track_progress) + "," + "speed_kmh:" + str(speed_kmh) + "," + "world_loc[0]:" + str(world_loc[0]) + "," + "world_loc[1]:" + str(world_loc[1]) + "," + "world_loc[2]:" + str(world_loc[2]) + "," + "throttle:" + str(
-            throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count)
-        # Send the data in bytes
-        sock.sendall(str.encode(data))
-    except Exception as e:
-        ac.console("[ACRL] EXCEPTION: could not send data!")
-        ac.console(e)
+    # Turn the data into a string
+    data = "track_progress:" + str(track_progress) + "," + "speed_kmh:" + str(speed_kmh) + "," + "world_loc[0]:" + str(world_loc[0]) + "," + "world_loc[1]:" + str(world_loc[1]) + "," + "world_loc[2]:" + str(world_loc[2]) + "," + "throttle:" + str(
+        throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count)
+    # Send the data in bytes
+    sock.sendall(str.encode(data))
 
 
 def acShutdown():
