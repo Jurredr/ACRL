@@ -95,11 +95,15 @@ class ACObservation:
         Update the observation data states from bytes to the correct types.
         :param data: The data in bytes.
         """
-        # Convert the byte data to a string
-        data_str = data.decode('utf-8')
+        try:
+            # Convert the byte data to a string
+            data_str = data.decode('utf-8')
 
-        # Split the string by commas and map values to a dictionary
-        data_dict = dict(map(lambda x: x.split(':'), data_str.split(',')))
+            # Split the string by commas and map values to a dictionary
+            data_dict = dict(map(lambda x: x.split(':'), data_str.split(',')))
+        except:
+            # If the data is invalid, return
+            return
 
         self.track_progress = float(data_dict['track_progress'])
         self.speed_kmh = float(data_dict['speed_kmh'])
