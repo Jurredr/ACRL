@@ -29,9 +29,10 @@ class ACController:
         :param brake: The brake value.
         :param steer: The steering value.
         """
-        self.gamepad.left_trigger_float(throttle)
-        self.gamepad.right_trigger_float(brake)
-        self.gamepad.left_joystick_float(x_value=steer)
+        self.gamepad.left_trigger_float(value_float=brake)
+        self.gamepad.right_trigger_float(value_float=throttle)
+        self.gamepad.left_joystick_float(
+            x_value_float=steer, y_value_float=0.0)
         self.gamepad.update()
 
     def reset_car(self):
