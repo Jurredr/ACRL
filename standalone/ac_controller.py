@@ -39,4 +39,6 @@ class ACController:
         Reset the car back to the starting line.
         """
         # Press the F10 key on the keyboard to trigger a respawn in the AC app
-        keyboard.press_and_release('F10')
+        keyboard.press('F10')
+        time.sleep(0.5)
+        keyboard.release('F10')
