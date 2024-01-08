@@ -75,6 +75,7 @@ class ACEnvironment:
         :param timeout: The timeout in ms after which an episode has taken too long (it took too long to reach the finish line).
         :return: Whether the episode is done.
         """
+        # TODO: Ideally, we would want to check whether the car is stuck, e.g. through checking if speed is too low (or zero) for too long
         return self.observations.lap_invalid or self.observations.lap_count > 0 or self.observations.track_progress == 1.0 or self.observations.lap_time >= timeout
 
 
