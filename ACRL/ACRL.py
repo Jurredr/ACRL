@@ -107,7 +107,12 @@ def acShutdown():
     """
     global training
     training = False
-    sock.close()
+    try:
+        stop()
+        t_res.join()
+        t_sock.join()
+    except:
+        pass
     ac.console("[ACRL] Shutting down...")
 
 
@@ -147,9 +152,6 @@ def stop(*args):
     training = False
     completed = True
 
-    # Clear the socket listener thread
-    t_sock = None
-
 
 def connect():
     """
@@ -172,7 +174,8 @@ def respawn_listener():
     """
     Listens for particular key press and will respawn the car at the finish line when pressed.
     """
-    while True:
+    global completed
+    while not completed:
         if getKeyState(RES_KEY):
             ac.console("[ACRL] Respawning...")
             # Restart to session menu
