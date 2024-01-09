@@ -41,6 +41,9 @@ connected = False
 t_res = None
 RES_KEY = 121  # F10
 
+# Socket thread
+t_sock = None
+
 # Label & button variables
 label_model_info = None
 btn_start = None
@@ -84,7 +87,7 @@ def acMain(ac_version):
     ac.addOnClickedListener(btn_stop, stop)
     ac.setVisible(btn_stop, 0)
 
-    # Start the respawn listener
+    # Start the respawn listener thread
     t_res = threading.Thread(target=respawn_listener)
     t_res.start()
 
@@ -95,41 +98,10 @@ def acMain(ac_version):
 def acUpdate(deltaT):
     """
     The update function of the app, called every frame.
-    Here we get the data from the game, and send it over the socket to the RL model.
     :param deltaT: The time since the last frame as a float.
     """
-    global label_model_info, training
-
     # Update the model info label
     ac.setText(label_model_info, "Training: " + str(training))
-
-    # If not training, don't do anything
-    if not training:
-        return
-
-    # If the socket is not connected, try to connect
-    if not connect():
-        ac.console(
-            "[ACRL] Socket could not connect to host in acUpdate, stopping training!")
-        stop()
-        return
-
-    # Get the data from the game
-    track_progress = ci.get_location()
-    speed_kmh = ci.get_speed()
-    world_loc = ci.get_world_location()
-    throttle = ii.get_gas_input()
-    brake = ii.get_brake_input()
-    steer = ii.get_steer_input()
-    lap_time = li.get_current_lap_time()
-    lap_invalid = li.get_invalid()
-    lap_count = li.get_lap_count()
-
-    # Turn the data into a string
-    data = "track_progress:" + str(track_progress) + "," + "speed_kmh:" + str(speed_kmh) + "," + "world_loc[0]:" + str(world_loc[0]) + "," + "world_loc[1]:" + str(world_loc[1]) + "," + "world_loc[2]:" + str(world_loc[2]) + "," + "throttle:" + str(
-        throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count)
-    # Send the data in bytes
-    sock.sendall(str.encode(data))
 
 
 def acShutdown():
@@ -154,6 +126,11 @@ def start(*args):
         training = False
         return
 
+    # Start the socket listener thread
+    if t_sock is None:
+        t_sock = threading.Thread(target=sock_listener)
+    t_sock.start()
+
     ac.console("[ACRL] Starting model...")
 
     ac.setVisible(btn_start, 0)
@@ -167,13 +144,17 @@ def stop(*args):
     :param args: The arguments passed to the function.
     """
     global btn_start, btn_stop, training, sock, connected
+
     ac.console("[ACRL] Stopping model...")
     sock.close()
     connected = False
+    training = False
+
+    # Stop the socket listener thread
+    t_sock.join()
 
     ac.setVisible(btn_start, 1)
     ac.setVisible(btn_stop, 0)
-    training = False
 
 
 def connect():
@@ -204,3 +185,40 @@ def respawn_listener():
             sendCMD(68)
             # Start the lap + driving
             sendCMD(69)
+
+
+def sock_listener():
+    while True:
+
+        # If not training, don't do anything
+        if not training:
+            break
+
+        # If the socket is not connected, try to connect
+        if not connect():
+            ac.console(
+                "[ACRL] Socket could not connect to host in acUpdate, stopping training!")
+            stop()
+            break
+
+        data = sock.recv(1024)
+        if not data:
+            break
+        ac.console("[ACRL] Received request, responding with game data...")
+
+        # Get the data from the game
+        track_progress = ci.get_location()
+        speed_kmh = ci.get_speed()
+        world_loc = ci.get_world_location()
+        throttle = ii.get_gas_input()
+        brake = ii.get_brake_input()
+        steer = ii.get_steer_input()
+        lap_time = li.get_current_lap_time()
+        lap_invalid = li.get_invalid()
+        lap_count = li.get_lap_count()
+
+        # Turn the data into a string
+        data = "track_progress:" + str(track_progress) + "," + "speed_kmh:" + str(speed_kmh) + "," + "world_loc[0]:" + str(world_loc[0]) + "," + "world_loc[1]:" + str(world_loc[1]) + "," + "world_loc[2]:" + str(world_loc[2]) + "," + "throttle:" + str(
+            throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count)
+        # Send the data in bytes
+        sock.sendall(str.encode(data))
