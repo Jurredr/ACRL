@@ -125,16 +125,16 @@ def start(*args):
         training = False
         return
 
-    # Start the socket listener thread
-    if t_sock is None:
-        t_sock = threading.Thread(target=sock_listener)
-    t_sock.start()
-
     ac.console("[ACRL] Starting model...")
 
     ac.setVisible(btn_start, 0)
     ac.setVisible(btn_stop, 1)
     training = True
+
+    # Start the socket listener thread
+    if t_sock is None:
+        t_sock = threading.Thread(target=sock_listener)
+    t_sock.start()
 
 
 def stop(*args):
@@ -187,6 +187,7 @@ def respawn_listener():
 
 
 def sock_listener():
+    global sock, training
     while True:
 
         # If not training, don't do anything
