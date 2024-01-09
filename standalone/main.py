@@ -24,7 +24,9 @@ def main():
                   8], max_action=10, gamma=0.99, n_actions=3, max_size=1000000, tau=0.005, batch_size=256, reward_scale=2)
 
     # Initialize the controller
-    controller = ACController()
+    # The ferrari 312t has a steering range of [-220, 220] degrees for [-1.0, 1.0]
+    steer_scale = [-220, 220]
+    controller = ACController(steer_scale=steer_scale)
 
     # Establish a socket connection
     sock = ACSocket()

@@ -1,6 +1,7 @@
 import time
 import vgamepad
 import keyboard
+import numpy as np
 
 
 class ACController:
@@ -9,10 +10,11 @@ class ACController:
     This class uses the vgamepad library to send inputs to the game.
     """
 
-    def __init__(self):
+    def __init__(self, steer_scale=[-360, 360]):
         """
         Initialize the virtual controller.
         """
+        self.steer_scale = steer_scale
         self.gamepad = vgamepad.VX360Gamepad()
 
         # Press and release a button so AC recognizes the controller
@@ -34,6 +36,10 @@ class ACController:
         self.gamepad.left_joystick_float(
             x_value_float=steer, y_value_float=0.0)
         self.gamepad.update()
+
+        steer_degrees = np.interp(steer, [-1.0, 1.0], self.steer_scale)
+        print("Throttle: ", throttle, " Brake: ",
+              brake, " Steer: ", steer_degrees)
 
     def reset_car(self):
         """
