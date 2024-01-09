@@ -9,13 +9,13 @@ class Agent():
     The agent class that will be used to train the agent.
     """
 
-    def __init__(self, alpha=0.0003, beta=0.0003, input_dims=[8], env=None, gamma=0.99, n_actions=2, max_size=1000000, tau=0.005, batch_size=256, reward_scale=2):
+    def __init__(self, alpha=0.0003, beta=0.0003, input_dims=[8], max_action=10, gamma=0.99, n_actions=3, max_size=1000000, tau=0.005, batch_size=256, reward_scale=2):
         """
         Initialize the agent.
         :param alpha: The learning rate of the actor network (default: 0.0003 from the paper)
         :param beta: The learning rate of the critic network (default: 0.0003 from the paper)
         :param input_dims: The dimensions of the input
-        :param env: The environment that the agent will be trained on
+        :param max_action: The maximum action
         :param gamma: The discount factor (default: 0.99 from the paper)
         :param n_actions: The number of actions (default: 2)
         :param max_size: The maximum size of the replay buffer (default: 1000000)
@@ -29,11 +29,10 @@ class Agent():
         # The memory of the agent
         self.memory = ReplayBuffer(max_size, input_dims, n_actions)
         self.batch_size = batch_size
-        self.n_actions = n_actions
 
         # The actor network
         self.actor = ActorNetwork(
-            alpha, input_dims, n_actions=n_actions, name='actor', max_action=env.action_space.high)
+            alpha, input_dims, n_actions=n_actions, name='actor', max_action=max_action)
 
         # The critic networks (we have two, we will take the minimum of the two)
         self.critic_1 = CriticNetwork(

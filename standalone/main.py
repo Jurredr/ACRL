@@ -18,11 +18,10 @@ def main():
     # 100 seconds timeout for each episode
     TIMEOUT = 100*1000
 
-    # TODO: Initialize the agent, how do we pass the observation space and action space here?
+    # TODO; Initialize the agent properly
     # https://github.com/philtabor/Youtube-Code-Repository/blob/master/ReinforcementLearning/PolicyGradient/SAC/main_sac.py
-    # agent = Agent(input_dims=env.observation_space.shape,
-    #               env=env, n_actions=env.action_space.shape[0])
-    agent = Agent()
+    agent = Agent(alpha=0.003, beta=0.0003, input_dims=[
+                  8], max_action=10, gamma=0.99, n_actions=3, max_size=1000000, tau=0.005, batch_size=256, reward_scale=2)
 
     # Initialize the controller
     controller = ACController()
