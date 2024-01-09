@@ -87,6 +87,9 @@ def main():
             print("[ACRL] Episode {} finished after {} steps with score {}".format(
                 i, step, score))
 
+        print("[ACRL] Training completed, sending stop signal to client...")
+        sock.end_training()
+
 
 if __name__ == "__main__":
     """

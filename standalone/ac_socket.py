@@ -35,13 +35,26 @@ class ACSocket:
 
     def update(self) -> None:
         """
-        Update the data attribute with the latest data from the socket.
+        Send a message to the client to request data, and then receive the data.
         """
         try:
+            self.conn.sendall(b"next_state")
+            print("[ACRL] Sent data request to client")
             self.data = self.conn.recv(1024)
             print("[ACRL] Received data from client")
         except:
             print("[ACRL] No data received from client, closing socket connection")
+            self.on_close()
+
+    def end_training(self) -> None:
+        """
+        Send an empty message to the client so it knows training has been completed.
+        """
+        try:
+            self.conn.sendall(b"")
+            print("[ACRL] Sent training completed message to client")
+        except:
+            print("[ACRL] No response from client, closing socket connection")
             self.on_close()
 
     def on_close(self) -> None:
