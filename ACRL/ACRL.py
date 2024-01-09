@@ -30,6 +30,7 @@ from IS_ACUtil import *  # noqa: E402
 
 # Training enabled flag
 training = False
+completed = False
 
 # Socket variables
 HOST = "127.0.0.1"  # The server's hostname or IP address
@@ -46,7 +47,6 @@ RES_KEY = 121  # F10
 # Label & button variables
 label_model_info = None
 btn_start = None
-btn_stop = None
 
 
 def acMain(ac_version):
@@ -74,17 +74,10 @@ def acMain(ac_version):
 
     # Start button
     btn_start = ac.addButton(APP_WINDOW, "Start Training")
-    ac.setPosition(btn_start, 20, 100)
-    ac.setSize(btn_start, 120, 30)
+    ac.setPosition(btn_start, 320/2, 100)
+    ac.setSize(btn_start, 280, 30)
     ac.addOnClickedListener(btn_start, start)
     ac.setVisible(btn_start, 1)
-
-    # Stop button
-    btn_stop = ac.addButton(APP_WINDOW, "Stop Training")
-    ac.setPosition(btn_stop, 320/2 + 10, 100)
-    ac.setSize(btn_stop, 120, 30)
-    ac.addOnClickedListener(btn_stop, stop)
-    ac.setVisible(btn_stop, 0)
 
     # Start the respawn listener thread
     t_res = threading.Thread(target=respawn_listener)
@@ -100,7 +93,12 @@ def acUpdate(deltaT):
     :param deltaT: The time since the last frame as a float.
     """
     # Update the model info label
-    ac.setText(label_model_info, "Training: " + str(training))
+    global completed
+    if completed:
+        ac.setText(label_model_info, "Training completed!" +
+                   "\nRestart to train again!")
+    else:
+        ac.setText(label_model_info, "Training: " + str(training))
 
 
 def acShutdown():
@@ -142,16 +140,13 @@ def stop(*args):
     The function called when the stop button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, training, sock, connected, t_sock
+    global btn_start, training, sock, connected, t_sock, completed
 
     ac.console("[ACRL] Stopping model...")
     sock.close()
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connected = False
     training = False
-
-    ac.setVisible(btn_start, 1)
-    ac.setVisible(btn_stop, 0)
+    completed = True
 
     # Clear the socket listener thread
     t_sock = None
