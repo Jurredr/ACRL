@@ -29,7 +29,7 @@ import ac  # noqa: E402
 from IS_ACUtil import *  # noqa: E402
 
 # Training enabled flag
-training = False
+training = threading.Event()
 
 # Socket variables
 HOST = "127.0.0.1"  # The server's hostname or IP address
@@ -68,7 +68,7 @@ def acMain(ac_version):
 
     # Info label
     label_model_info = ac.addLabel(
-        APP_WINDOW, "Training: " + str(training) + "\nClick start to begin!")
+        APP_WINDOW, "Training: " + str(training.is_set()) + "\nClick start to begin!")
     ac.setPosition(label_model_info, 320/2, 40)
     ac.setFontAlignment(label_model_info, "center")
 
@@ -100,7 +100,7 @@ def acUpdate(deltaT):
     :param deltaT: The time since the last frame as a float.
     """
     # Update the model info label
-    ac.setText(label_model_info, "Training: " + str(training))
+    ac.setText(label_model_info, "Training: " + str(training.is_set()))
 
 
 def acShutdown():
@@ -108,7 +108,7 @@ def acShutdown():
     The shutdown function of the app, called on app close.
     """
     global training
-    training = False
+    training.clear()
     sock.close()
     ac.console("[ACRL] Shutting down...")
 
@@ -122,14 +122,14 @@ def start(*args):
     if not connect():
         ac.console("[ACRL] Didn't start model, could not connect to socket!")
         connected = False
-        training = False
+        training.clear()
         return
 
     ac.console("[ACRL] Starting model...")
 
     ac.setVisible(btn_start, 0)
     ac.setVisible(btn_stop, 1)
-    training = True
+    training.set()
 
     # Start the socket listener thread
     if t_sock is None:
@@ -147,10 +147,12 @@ def stop(*args):
     ac.console("[ACRL] Stopping model...")
     sock.close()
     connected = False
-    training = False
 
     # Stop the socket listener thread
-    t_sock.join()
+    if t_sock is not None:
+        training.clear()
+        t_sock.join()
+        t_sock = None
 
     ac.setVisible(btn_start, 1)
     ac.setVisible(btn_stop, 0)
@@ -186,12 +188,12 @@ def respawn_listener():
             sendCMD(69)
 
 
-def sock_listener():
+def sock_listener(self):
     global sock, training
     while True:
 
         # If not training, don't do anything
-        if not training:
+        if not training.isSet():
             break
 
         # If the socket is not connected, try to connect
@@ -204,12 +206,8 @@ def sock_listener():
         # Receive signals from the socket
         data = sock.recv(1024)
         if not data:
-            ac.console("[ACRL] Received invalid data, stopping training...")
+            ac.console("[ACRL] Received stop signal, stopping training...")
             stop()
-            break
-        if len(data) == 0:
-            ac.console(
-                "[ACRL] Received stop signal (empty data), stopping training...")
             break
         ac.console("[ACRL] Received request, responding with game data...")
 
