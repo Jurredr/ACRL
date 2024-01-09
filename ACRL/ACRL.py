@@ -54,7 +54,7 @@ def acMain(ac_version):
     The main function of the app, called on app start.
     :param ac_version: The version of Assetto Corsa as a string.
     """
-    global label_model_info, btn_start, btn_stop, t_res
+    global label_model_info, btn_start, t_res
     ac.console("[ACRL] Initializing...")
 
     # Create the app window
@@ -116,7 +116,7 @@ def start(*args):
     The function called when the start button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, training, connected, t_sock
+    global btn_start, training, connected, t_sock
     if not connect():
         ac.console("[ACRL] Didn't start model, could not connect to socket!")
         connected = False
@@ -136,7 +136,7 @@ def start(*args):
 
 def stop(*args):
     """
-    The function called when the stop button is pressed.
+    The function called when the training has stopped.
     :param args: The arguments passed to the function.
     """
     global btn_start, training, sock, connected, t_sock, completed
