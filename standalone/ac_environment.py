@@ -117,6 +117,8 @@ class ACObservation:
         self.lap_invalid = bool(data_dict['lap_invalid']) or (
             self.lap_invalid is not None and self.lap_invalid)
         self.lap_count = int(data_dict['lap_count'])
+        self.slip_angle = float(data_dict['slip_angle'])
+        self.slip_ratio = float(data_dict['slip_ratio'])
 
     def arr(self):
         """
