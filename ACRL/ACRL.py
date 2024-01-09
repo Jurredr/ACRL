@@ -59,7 +59,7 @@ def acMain(ac_version):
 
     # Create the app window
     APP_WINDOW = ac.newApp(APP_NAME)
-    ac.setSize(APP_WINDOW, 320, 150)
+    ac.setSize(APP_WINDOW, 320, 140)
     ac.setTitle(APP_WINDOW, APP_NAME +
                 ": Reinforcement Learning")
 
@@ -74,7 +74,7 @@ def acMain(ac_version):
 
     # Start button
     btn_start = ac.addButton(APP_WINDOW, "Start Training")
-    ac.setPosition(btn_start, 320/2, 100)
+    ac.setPosition(btn_start, 20, 90)
     ac.setSize(btn_start, 280, 30)
     ac.addOnClickedListener(btn_start, start)
     ac.setVisible(btn_start, 1)
