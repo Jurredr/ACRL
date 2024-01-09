@@ -10,7 +10,7 @@ class ACEnvironment:
     observations = None
     next_observations = None
 
-    def __init__(self, data, max_speed=200.0, lap_completion_bonus=1.0, off_track_penalty=-0.5):
+    def __init__(self, data, max_speed=200.0, lap_completion_bonus=1.0, off_track_penalty=-1.0):
         """
         Initialize the environment with the initial data from the socket.
         :param data: The data received from the socket in bytes.
@@ -48,25 +48,24 @@ class ACEnvironment:
         Get the reward from the current environment observations.
         :return: The reward.
         """
-        # Reward for how far the car has come on the track
+        # Reward for how far the car has come on the track [0.0, 1.0]
         progress_reward = self.next_observations.track_progress
 
         # Give a reward for the current speed, going faster is better for the lap time
         speed_reward = self.next_observations.speed_kmh / \
-            self.max_speed  # Normalize speed to [0, 1]
+            self.max_speed  # Normalize speed to [0.0, 1.0]
 
-        # Penalty for Going Off Track
+        # Penalty for Going Off Track (default: -1.0)
         off_track_penalty = self.off_track_penalty if self.next_observations.lap_invalid else 0.0
 
-        # Lap completion bonus; an extra bonus for actually reaching the finish line
+        # Lap completion bonus; an extra bonus for actually reaching the finish line (default: 1.0)
         lap_completion_reward = self.lap_completion_bonus if self.next_observations.lap_count > 0 else 0.0
 
         # Combine individual rewards
         total_reward = lap_completion_reward + \
             progress_reward + speed_reward + off_track_penalty
 
-        # TODO; is this correct? Clip the total reward to be within [-1, 1]
-        total_reward = max(-1.0, min(total_reward, 1.0))
+        # Minimum reward is -1.0, maximum reward is 3.0
         return total_reward
 
     def episode_done(self, timeout=60*1000):
