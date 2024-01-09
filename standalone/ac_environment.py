@@ -114,7 +114,8 @@ class ACObservation:
         self.steer = float(data_dict['steer'])
         self.lap_time = float(data_dict['lap_time'])
         # Lap stays invalid as soon as it has been invalid once
-        self.lap_invalid = self.lap_invalid or bool(data_dict['lap_invalid'])
+        self.lap_invalid = bool(data_dict['lap_invalid']) or (
+            self.lap_invalid is not None and self.lap_invalid)
         self.lap_count = int(data_dict['lap_count'])
 
     def arr(self):
