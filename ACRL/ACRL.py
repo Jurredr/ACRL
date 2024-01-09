@@ -146,6 +146,7 @@ def stop(*args):
 
     ac.console("[ACRL] Stopping model...")
     sock.close()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connected = False
     training = False
 
