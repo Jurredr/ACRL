@@ -93,7 +93,7 @@ def acUpdate(deltaT):
     :param deltaT: The time since the last frame as a float.
     """
     # Update the model info label
-    global completed
+    global completed, training
     if completed:
         ac.setText(label_model_info, "Training completed!" +
                    "\nRestart to train again!")
@@ -126,7 +126,6 @@ def start(*args):
     ac.console("[ACRL] Starting model...")
 
     ac.setVisible(btn_start, 0)
-    ac.setVisible(btn_stop, 1)
     training = True
 
     # Start the socket listener thread
