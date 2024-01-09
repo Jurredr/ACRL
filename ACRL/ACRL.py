@@ -201,8 +201,15 @@ def sock_listener():
             stop()
             break
 
+        # Receive signals from the socket
         data = sock.recv(1024)
         if not data:
+            ac.console("[ACRL] Received invalid data, stopping training...")
+            stop()
+            break
+        if len(data) == 0:
+            ac.console(
+                "[ACRL] Received stop signal (empty data), stopping training...")
             break
         ac.console("[ACRL] Received request, responding with game data...")
 
@@ -220,5 +227,6 @@ def sock_listener():
         # Turn the data into a string
         data = "track_progress:" + str(track_progress) + "," + "speed_kmh:" + str(speed_kmh) + "," + "world_loc[0]:" + str(world_loc[0]) + "," + "world_loc[1]:" + str(world_loc[1]) + "," + "world_loc[2]:" + str(world_loc[2]) + "," + "throttle:" + str(
             throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count)
+
         # Send the data in bytes
         sock.sendall(str.encode(data))
