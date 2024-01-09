@@ -71,14 +71,14 @@ def acMain(ac_version):
     ac.setFontAlignment(label_model_info, "center")
 
     # Start button
-    btn_start = ac.addButton(APP_WINDOW, "Start Model")
+    btn_start = ac.addButton(APP_WINDOW, "Start Training")
     ac.setPosition(btn_start, 20, 100)
     ac.setSize(btn_start, 120, 30)
     ac.addOnClickedListener(btn_start, start)
     ac.setVisible(btn_start, 1)
 
     # Stop button
-    btn_stop = ac.addButton(APP_WINDOW, "Stop Model")
+    btn_stop = ac.addButton(APP_WINDOW, "Stop Training")
     ac.setPosition(btn_stop, 320/2 + 10, 100)
     ac.setSize(btn_stop, 120, 30)
     ac.addOnClickedListener(btn_stop, stop)
