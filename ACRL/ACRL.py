@@ -36,13 +36,12 @@ HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 65431  # The port used by the server
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 connected = False
+# Socket thread
+t_sock = None
 
 # Respawn thread
 t_res = None
 RES_KEY = 121  # F10
-
-# Socket thread
-t_sock = None
 
 # Label & button variables
 label_model_info = None
@@ -119,7 +118,7 @@ def start(*args):
     The function called when the start button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, training, connected
+    global btn_start, btn_stop, training, connected, t_sock
     if not connect():
         ac.console("[ACRL] Didn't start model, could not connect to socket!")
         connected = False
@@ -143,7 +142,7 @@ def stop(*args):
     The function called when the stop button is pressed.
     :param args: The arguments passed to the function.
     """
-    global btn_start, btn_stop, training, sock, connected
+    global btn_start, btn_stop, training, sock, connected, t_sock
 
     ac.console("[ACRL] Stopping model...")
     sock.close()
