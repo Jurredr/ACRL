@@ -11,7 +11,7 @@ class CriticNetwork(nn.Module):
     The critic network.
     """
 
-    def __init__(self, beta, input_dims, n_actions, fc1_dims=256, fc2_dims=256, name='critic', chkpt_dir='tmp/sac'):
+    def __init__(self, beta, input_dims, n_actions, fc1_dims=256, fc2_dims=256, name='critic', chkpt_dir='tmp\sac'):
         """
         Initialize the critic network.
         :param beta: The learning rate.
@@ -20,7 +20,7 @@ class CriticNetwork(nn.Module):
         :param fc1_dims: The number of neurons in the first fully connected layer.  (default: 256 as per the paper)
         :param fc2_dims: The number of neurons in the second fully connected layer. (default: 256 as per the paper)
         :param name: The name of the network.
-        :param chkpt_dir: The directory to save the network to. (default: tmp/sac)
+        :param chkpt_dir: The directory to save the network to. (default: tmp\sac)
         """
         super(CriticNetwork, self).__init__()
         self.input_dims = input_dims
@@ -91,7 +91,7 @@ class ValueNetwork(nn.Module):
     The value network.
     """
 
-    def __init__(self, beta, input_dims, fc1_dims=256, fc2_dims=256, name='value', chkpt_dir='tmp/sac'):
+    def __init__(self, beta, input_dims, fc1_dims=256, fc2_dims=256, name='value', chkpt_dir='tmp\sac'):
         """
         Initialize the value network.
         :param beta: The learning rate.
@@ -99,7 +99,7 @@ class ValueNetwork(nn.Module):
         :param fc1_dims: The number of neurons in the first fully connected layer.  (default: 256 as per the paper)
         :param fc2_dims: The number of neurons in the second fully connected layer. (default: 256 as per the paper)
         :param name: The name of the network.
-        :param chkpt_dir: The directory to save the network to. (default: tmp/sac)
+        :param chkpt_dir: The directory to save the network to. (default: tmp\sac)
         """
         super(ValueNetwork, self).__init__()
         self.input_dims = input_dims
@@ -167,7 +167,7 @@ class ActorNetwork(nn.Module):
     The actor network.
     """
 
-    def __init__(self, alpha, input_dims, max_action, fc1_dims=256, fc2_dims=256, n_actions=2, name='actor', chkpt_dir='tmp/sac'):
+    def __init__(self, alpha, input_dims, max_action, fc1_dims=256, fc2_dims=256, n_actions=2, name='actor', chkpt_dir='tmp\sac'):
         """
         Initialize the actor network.
         :param alpha: The learning rate.
@@ -177,7 +177,7 @@ class ActorNetwork(nn.Module):
         :param fc2_dims: The number of neurons in the second fully connected layer. (default: 256 as per the paper)
         :param n_actions: The number of actions. (default: 2)
         :param name: The name of the network.
-        :param chkpt_dir: The directory to save the network to. (default: tmp/sac)
+        :param chkpt_dir: The directory to save the network to. (default: tmp\sac)
         """
         super(ActorNetwork, self).__init__()
         self.input_dims = input_dims
