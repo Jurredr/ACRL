@@ -6,7 +6,6 @@ import threading
 import ac_api.car_info as ci
 import ac_api.input_info as ii
 import ac_api.lap_info as li
-import ac_api.tyre_info as ti
 
 # The name of the app (ACRL: Assetto Corsa Reinforcement Learning)
 APP_NAME = 'ACRL'
@@ -219,12 +218,9 @@ def sock_listener():
         lap_invalid = li.get_invalid()
         lap_count = li.get_lap_count()
 
-        slip_angle = ti.get_slip_angle()
-        slip_ratio = ti.get_slip_ratio()
-
         # Turn the data into a string
         data = "track_progress:" + str(track_progress) + "," + "speed_kmh:" + str(speed_kmh) + "," + "world_loc[0]:" + str(world_loc[0]) + "," + "world_loc[1]:" + str(world_loc[1]) + "," + "world_loc[2]:" + str(world_loc[2]) + "," + "throttle:" + str(
-            throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count) + "," + "slip_angle:" + str(slip_angle) + "," + "slip_ratio:" + str(slip_ratio)
+            throttle) + "," + "brake:" + str(brake) + "," + "steer:" + str(steer) + "," + "lap_time:" + str(lap_time) + "," + "lap_invalid:" + str(lap_invalid) + "," + "lap_count:" + str(lap_count)
 
         # Send the data in bytes
         sock.sendall(str.encode(data))
