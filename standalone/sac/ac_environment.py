@@ -1,9 +1,11 @@
+from typing import Optional
 import numpy as np
 
 import gymnasium as gym
 from gymnasium import spaces
 
 from ac_controller import ACController
+from ac_socket import ACSocket
 
 
 class AcEnv(gym.Env):
@@ -15,7 +17,7 @@ class AcEnv(gym.Env):
     _observations = None
     invalid_flag = 0.0
 
-    def __init__(self, render_mode=None, max_speed=200.0, steer_scale=[-360, 360]):
+    def __init__(self, render_mode: Optional[str] = None, max_speed=200.0, steer_scale=[-360, 360]):
         # Initialize the controller
         self.controller = ACController(steer_scale)
         self.max_speed = max_speed
@@ -40,14 +42,17 @@ class AcEnv(gym.Env):
         # - A brake, which is a number in [0.0, 1.0]
         # - A steering angle, which is a number in [-1.000, 1.000]
         self.action_space = spaces.Box(
-            low=np.array([0.0, 0.0, -1.000]), high=np.array([1.0, 1.0, 1.000]), dtype=np.float32
+            low=np.array([0.0, 0.0, -1.000]),
+            high=np.array([1.0, 1.0, 1.000]),
+            shape=(3,),
+            dtype=np.float32
         )
 
         # Assert that the render mode is valid
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
 
-    def _update_obs(self, sock):
+    def _update_obs(self, sock: ACSocket):
         """
         Get the current observation from the game over socket.
         """
@@ -124,7 +129,7 @@ class AcEnv(gym.Env):
         # Minimum reward is -1.0, maximum reward is 3.0
         return total_reward
 
-    def reset(self, sock, seed=None, options=None):
+    def reset(self, sock: ACSocket, seed: Optional[int] = None, options: Optional[dict] = None):
         """
         Reset the environment to initiate a new episode.
         :param seed: The seed for the environment's random number generator
@@ -143,7 +148,7 @@ class AcEnv(gym.Env):
 
         return observation, info
 
-    def step(self, sock, action):
+    def step(self, sock: ACSocket, action: np.ndarray):
         """
         Perform an action in the environment and get the results.
         :param action: The action to perform
