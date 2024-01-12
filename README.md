@@ -29,6 +29,7 @@ The project consists of two main components:
     - Confirm tires are the default option
     - Set the number of AI opponents to 0
     - Turn on `penalties` and `ideal conditions`
+    - Limit the framerate to 30 FPS
     - Set controls to `Gamepad`, with speed sensitivity set to 0, steering speed set to 100%, steering gamma set to 100%, and steering filter set to 0%
 6. Start the session and wait for the car to spawn on the track.
 7. Run the `standalone/main.py` file to start listening for an incoming connection from Assetto Corsa.
