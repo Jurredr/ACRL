@@ -16,7 +16,7 @@ The project consists of two main components:
 ## Getting started
 
 1. Purchase and install [Assetto Corsa](https://store.steampowered.com/app/244210/Assetto_Corsa/) on Steam, and download the free [Content Manager](https://assettocorsa.club/content-manager.html) extension software.
-2. Clone this repository to your local machine. (See [here](https://help.github.com/en/articles/cloning-a-repository) for instructions on how to clone a repository.
+2. Clone this repository to your local machine. (See [here](https://help.github.com/en/articles/cloning-a-repository) for instructions on how to clone a repository.)
 3. Getting the Assetto Corsa app working:
     - Install the [Python 3.5.1](https://www.python.org/downloads/release/python-351/) interpreter. This is what Assetto Corsa uses and we need this locally for the socket import to not throw errors in AC. Make sure to add Python to your [PATH environment variable](https://www.pythoncentral.io/add-python-to-path-python-is-not-recognized-as-an-internal-or-external-command/).
     - Copy the `ACRL` folder to the `apps/python` folder in your Assetto Corsa installation directory. (e.g. `C:\Program Files (x86)\Steam\steamapps\common\assettocorsa\apps\python`)
