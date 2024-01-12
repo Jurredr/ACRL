@@ -15,7 +15,7 @@ class AcEnv(gym.Env):
 
     metadata = {"render_modes": [], "render_fps": 0}
     _observations = None
-    invalid_flag = 0.0
+    _invalid_flag = 0.0
     _sock = None
 
     def __init__(self, render_mode: Optional[str] = None, max_speed=200.0, steer_scale=[-360, 360]):
@@ -33,7 +33,8 @@ class AcEnv(gym.Env):
         # - "lap_count": The current lap count [1.0, 2.0]
         self.observation_space = spaces.Box(
             low=np.array([0.000, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0]),
-            high=np.array([1.000, max_speed, 2000.0, 2000.0, 2000.0, 1.0, 2.0]),
+            high=np.array([1.000, max_speed, 2000.0,
+                          2000.0, 2000.0, 1.0, 2.0]),
             shape=(7,),
             dtype=np.float32,
         )
@@ -81,22 +82,22 @@ class AcEnv(gym.Env):
         # lap_time = float(data_dict['lap_time'])
 
         print(data_dict)
-        track_progress = float(data_dict['track_progress']), 1
-        speed_kmh = float(data_dict['speed_kmh']), 1
-        world_loc_x = float(data_dict['world_loc[0]']), 1
-        world_loc_y = float(data_dict['world_loc[1]']), 1
-        world_loc_z = float(data_dict['world_loc[2]']), 1
+        track_progress = float(data_dict['track_progress'])
+        speed_kmh = float(data_dict['speed_kmh'])
+        world_loc_x = float(data_dict['world_loc[0]'])
+        world_loc_y = float(data_dict['world_loc[1]'])
+        world_loc_z = float(data_dict['world_loc[2]'])
+        lap_count = float(data_dict['lap_count'])
 
         # Lap stays invalid as soon as it has been invalid once
-        lap_invalid = self.invalid_flag
+        lap_invalid = self._invalid_flag
         if data_dict['lap_invalid']:
             lap_invalid = 1.0
-        self.invalid_flag = lap_invalid
-        lap_count = float(data_dict['lap_count'])
+        self._invalid_flag = lap_invalid
 
         # Update the observations
         self._observations = np.array(
-            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, 0.0, lap_count], dtype=np.float32)
+            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count], dtype=np.float32)
         return self._observations
 
     def _get_info(self):
@@ -148,6 +149,7 @@ class AcEnv(gym.Env):
         self.controller.reset_car()
 
         # Get the initial observations from the game
+        self._invalid_flag = 0.0
         observation = self._update_obs()
         info = self._get_info()
 
