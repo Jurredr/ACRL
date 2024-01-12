@@ -34,17 +34,18 @@ def main():
     # Loop until the socket is closed or the program is terminated
     with sock.connect() as conn:
         print("Starting training...")
+        env.set_sock(conn)
 
         for i in range(n_episodes):
             print("--- Starting episode:", i + 1, "/", n_episodes)
-            observation, _ = env.reset(sock=sock)
+            observation, _ = env.reset()
             done = False
             score = 0
 
             while not done:
                 action = agent.choose_action(observation)
                 observation_, reward, terminated, truncated, info = env.step(
-                    sock=sock, action=action)
+                    action=action)
                 done = terminated or truncated
                 score += reward
                 agent.remember(observation, action, reward,

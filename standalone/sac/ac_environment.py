@@ -16,6 +16,7 @@ class AcEnv(gym.Env):
     metadata = {"render_modes": [], "render_fps": 0}
     _observations = None
     invalid_flag = 0.0
+    _sock = None
 
     def __init__(self, render_mode: Optional[str] = None, max_speed=200.0, steer_scale=[-360, 360]):
         # Initialize the controller
@@ -52,13 +53,16 @@ class AcEnv(gym.Env):
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
 
-    def _update_obs(self, sock: ACSocket):
+    def set_sock(self, sock: ACSocket):
+        self._sock = sock
+
+    def _update_obs(self):
         """
         Get the current observation from the game over socket.
         """
         # Send a request to the game
-        sock.update()
-        data = sock.data
+        self._sock.update()
+        data = self._sock.data
 
         try:
             # Convert the byte data to a string
@@ -129,7 +133,7 @@ class AcEnv(gym.Env):
         # Minimum reward is -1.0, maximum reward is 3.0
         return total_reward
 
-    def reset(self, sock: ACSocket, seed: Optional[int] = None, options: Optional[dict] = None):
+    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
         """
         Reset the environment to initiate a new episode.
         :param seed: The seed for the environment's random number generator
@@ -143,12 +147,12 @@ class AcEnv(gym.Env):
         self.controller.reset_car()
 
         # Get the initial observations from the game
-        observation = self._update_obs(sock)
+        observation = self._update_obs()
         info = self._get_info()
 
         return observation, info
 
-    def step(self, sock: ACSocket, action: np.ndarray):
+    def step(self, action: np.ndarray):
         """
         Perform an action in the environment and get the results.
         :param action: The action to perform
@@ -158,7 +162,7 @@ class AcEnv(gym.Env):
         self.controller.perform(action[0], action[1], action[2])
 
         # Get the new observations
-        observation = self._update_obs(sock)
+        observation = self._update_obs()
 
         # TODO: add check if speed is too low for a while
         lap_invalid = observation[5]
