@@ -3,7 +3,7 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 
-from standalone.ac_controller import ACController
+from ac_controller import ACController
 
 
 class AcEnv(gym.Env):
@@ -13,28 +13,26 @@ class AcEnv(gym.Env):
 
     metadata = {"render_modes": [], "render_fps": 0}
     _observations = None
+    invalid_flag = 0.0
 
     def __init__(self, render_mode=None, max_speed=200.0, steer_scale=[-360, 360]):
         # Initialize the controller
         self.controller = ACController(steer_scale)
         self.max_speed = max_speed
 
-        # Observations is a dictionary with the following keys:
+        # Observations is a Box with the following data:
         # - "track_progress": The progress of the car on the track, in [0.0, 1.0]
-        # - "speed_kmh": The speed of the car in km/h
-        # - "world_loc": The world location of the car [x, y, z]
-        # - "lap_invalid": Whether the current lap is invalid (boolean)
-        # - "lap_count": The current lap count (0 or 1)
-        # - "steer": The previous steering angle of the car in [-1.000, 1.000]
-        self.observation_space = spaces.Dict(
-            {
-                "track_progress": spaces.Box(0.0, 1.0, shape=(1,), dtype=np.float32),
-                "speed_kmh": spaces.Box(0.0, max_speed, shape=(1,), dtype=np.float32),
-                "world_loc": spaces.Box(-2000.0, 2000.0, shape=(3,), dtype=np.float32),
-                "lap_invalid": spaces.Discrete(2),
-                "lap_count": spaces.Discrete(2),
-                # "steer": spaces.Box(-1.000, 1.000, shape=(1,), dtype=np.float32),
-            }
+        # - "speed_kmh": The speed of the car in km/h [0.0, max_speed]
+        # - "world_loc_x": The world's x location of the car [-2000.0, 2000.0]
+        # - "world_loc_y": The world's y location of the car [-2000.0, 2000.0]
+        # - "world_loc_z": The world's z location of the car [-2000.0, 2000.0]
+        # - "lap_invalid": Whether the current lap is valid [0.0, 1.0]
+        # - "lap_count": The current lap count [1.0, 2.0]
+        self.observation_space = spaces.Box(
+            low=np.array([0.0, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0]),
+            high=np.array([1.0, max_speed, 2000.0, 2000.0, 2000.0, 1.0, 2.0]),
+            shape=(7,),
+            dtype=np.float32,
         )
 
         # We have a continuous action space, where we have:
@@ -54,12 +52,10 @@ class AcEnv(gym.Env):
         Get the current observation from the game over socket.
         """
         # Send a request to the game
-        sock.send(b"data_request")
+        sock.update()
+        data = sock.data
 
-        # Receive the data from the game
         try:
-            data = sock.recv(1024)
-
             # Convert the byte data to a string
             data_str = data.decode('utf-8')
 
@@ -75,24 +71,22 @@ class AcEnv(gym.Env):
         # steer = float(data_dict['steer'])
         # lap_time = float(data_dict['lap_time'])
 
-        track_progress = float(data_dict['track_progress'])
-        speed_kmh = float(data_dict['speed_kmh'])
-        world_loc = np.array([float(data_dict['world_loc[0]']), float(
-            data_dict['world_loc[1]']), float(data_dict['world_loc[2]'])])
+        print(data_dict)
+        track_progress = round(float(data_dict['track_progress']), 1)
+        speed_kmh = round(float(data_dict['speed_kmh']), 1)
+        world_loc_x = round(float(data_dict['world_loc[0]']), 1)
+        world_loc_y = round(float(data_dict['world_loc[1]']), 1)
+        world_loc_z = round(float(data_dict['world_loc[2]']), 1)
 
         # Lap stays invalid as soon as it has been invalid once
-        lap_invalid = bool(data_dict['lap_invalid']) or (
-            self._observations is not None and self._observations['lap_invalid'] is not None and self._observations['lap_invalid'])
-        lap_count = int(data_dict['lap_count'])
+        lap_invalid = 1.0 if bool(
+            data_dict['lap_invalid']) or self.invalid_flag == 1.0 else 0.0
+        self.invalid_flag = lap_invalid
+        lap_count = float(data_dict['lap_count'])
 
         # Update the observations
-        self._observations = {
-            "track_progress": track_progress,
-            "speed_kmh": speed_kmh,
-            "world_loc": world_loc,
-            "lap_invalid": lap_invalid,
-            "lap_count": lap_count,
-        }
+        self._observations = np.array(
+            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count], dtype=np.float32)
         return self._observations
 
     def _get_info(self):
@@ -111,17 +105,17 @@ class AcEnv(gym.Env):
         observations = self._observations
 
         # Reward for how far the car has come on the track [0.0, 1.0]
-        progress_reward = observations['track_progress']
+        progress_reward = observations[0]
 
         # Give a reward for the current speed, going faster is better for the lap time
-        speed_reward = observations['speed_kmh'] / \
+        speed_reward = observations[1] / \
             self.max_speed  # Normalize speed to [0.0, 1.0]
 
         # Penalty for Going Off Track (-1.0)
-        off_track_penalty = off_track_penalty if observations['lap_invalid'] else 0.0
+        off_track_penalty = off_track_penalty if observations[5] else 0.0
 
         # Lap completion bonus; an extra bonus for actually reaching the finish line (default: 1.0)
-        lap_completion_reward = lap_completion_bonus if observations['lap_count'] > 0 else 0.0
+        lap_completion_reward = lap_completion_bonus if observations[6] > 1.0 else 0.0
 
         # Combine individual rewards
         total_reward = lap_completion_reward + \
@@ -162,7 +156,10 @@ class AcEnv(gym.Env):
         observation = self._update_obs(sock)
 
         # TODO: add check if speed is too low for a while
-        terminated = observation['lap_invalid'] or observation['lap_count'] > 0 or observation['track_progress'] == 1.0
+        lap_invalid = observation[5]
+        lap_count = observation[6]
+        track_progress = observation[0]
+        terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress == 1.0
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False

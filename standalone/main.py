@@ -16,7 +16,8 @@ def main():
     steer_scale = [-220, 220]
 
     # Initialize the environment, max_episode_steps is the maximum amount of steps before the episode is truncated
-    env = TimeLimit(AcEnv(max_speed, steer_scale), max_episode_steps=300)
+    env = TimeLimit(AcEnv(max_speed=max_speed,
+                    steer_scale=steer_scale), max_episode_steps=300)
 
     # Initialize the agent
     agent = Agent(input_dims=env.observation_space.shape,
@@ -36,7 +37,7 @@ def main():
 
         for i in range(n_episodes):
             print("--- Starting episode:", i + 1, "/", n_episodes)
-            observation = env.reset(sock=sock)
+            observation, _ = env.reset(sock=sock)
             done = False
             score = 0
 
@@ -44,8 +45,8 @@ def main():
                 action = agent.choose_action(observation)
                 observation_, reward, terminated, truncated, info = env.step(
                     sock=sock, action=action)
-                score += reward
                 done = terminated or truncated
+                score += reward
                 agent.remember(observation, action, reward,
                                observation_, done)
                 agent.learn()
