@@ -11,9 +11,9 @@ def main():
     The main function of the standalone application.
     It connects to the Assetto Corsa app, gets data, runs it through the RL model, and sends actions back to the game.
     """
-    # Car data (ferrari 312t)
-    max_speed = 300.0
-    steer_scale = [-220, 220]
+    # Car data (Ferrari 458 GT2)
+    max_speed = 270.0
+    steer_scale = [-270, 270]
 
     # Initialize the environment, max_episode_steps is the maximum amount of steps before the episode is truncated
     env = TimeLimit(AcEnv(max_speed=max_speed,
