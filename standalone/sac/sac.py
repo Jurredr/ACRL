@@ -65,6 +65,7 @@ class Agent():
         print("state", state)
         # Get the action from the actor network
         actions, _ = self.actor.sample_normal(state, reparameterize=False)
+        print("choose_action", actions)
 
         # Convert the action to a numpy array
         return actions.cpu().detach().numpy()[0]

@@ -32,8 +32,8 @@ class AcEnv(gym.Env):
         # - "lap_invalid": Whether the current lap is valid [0.0, 1.0]
         # - "lap_count": The current lap count [1.0, 2.0]
         self.observation_space = spaces.Box(
-            low=np.array([0.0, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0]),
-            high=np.array([1.0, max_speed, 2000.0, 2000.0, 2000.0, 1.0, 2.0]),
+            low=np.array([0.000, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0]),
+            high=np.array([1.000, max_speed, 2000.0, 2000.0, 2000.0, 1.0, 2.0]),
             shape=(7,),
             dtype=np.float32,
         )
@@ -81,21 +81,22 @@ class AcEnv(gym.Env):
         # lap_time = float(data_dict['lap_time'])
 
         print(data_dict)
-        track_progress = round(float(data_dict['track_progress']), 1)
-        speed_kmh = round(float(data_dict['speed_kmh']), 1)
-        world_loc_x = round(float(data_dict['world_loc[0]']), 1)
-        world_loc_y = round(float(data_dict['world_loc[1]']), 1)
-        world_loc_z = round(float(data_dict['world_loc[2]']), 1)
+        track_progress = float(data_dict['track_progress']), 1
+        speed_kmh = float(data_dict['speed_kmh']), 1
+        world_loc_x = float(data_dict['world_loc[0]']), 1
+        world_loc_y = float(data_dict['world_loc[1]']), 1
+        world_loc_z = float(data_dict['world_loc[2]']), 1
 
         # Lap stays invalid as soon as it has been invalid once
-        lap_invalid = 1.0 if bool(
-            data_dict['lap_invalid']) or self.invalid_flag == 1.0 else 0.0
+        lap_invalid = self.invalid_flag
+        if data_dict['lap_invalid']:
+            lap_invalid = 1.0
         self.invalid_flag = lap_invalid
         lap_count = float(data_dict['lap_count'])
 
         # Update the observations
         self._observations = np.array(
-            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count], dtype=np.float32)
+            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, 0.0, lap_count], dtype=np.float32)
         return self._observations
 
     def _get_info(self):
@@ -159,6 +160,7 @@ class AcEnv(gym.Env):
         :return: The observation, reward, terminated, truncated, info
         """
         # Perform the action in the game
+        print("action", action)
         self.controller.perform(action[0], action[1], action[2])
 
         # Get the new observations
@@ -168,7 +170,8 @@ class AcEnv(gym.Env):
         lap_invalid = observation[5]
         lap_count = observation[6]
         track_progress = observation[0]
-        terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress == 1.0
+        # terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress == 1.0
+        terminated = False
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False
