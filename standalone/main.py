@@ -34,7 +34,7 @@ def main():
     # Loop until the socket is closed or the program is terminated
     with sock.connect() as conn:
         print("Starting training...")
-        env.set_sock(sock)
+        env.unwrapped.set_sock(sock)
 
         for i in range(n_episodes):
             print("--- Starting episode:", i + 1, "/", n_episodes)
