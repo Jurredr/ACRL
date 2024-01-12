@@ -25,7 +25,7 @@ The project consists of two main components:
     - Install a modern Python interpreter (tested on: [Python 3.10.11](https://www.python.org/downloads/release/python-31011/)). This is what we use for the part of the project that runs outside of AC.
     - Install the required Python packages by running `pip install -r requirements.txt` in the root of the `/standalone` directory.
 5. Set up a new session in Assetto Corsa through Content Manager:
-    - Select Practice Mode and choose track x and car y
+    - Select Practice Mode and choose track "Silverstone 1967" and car "Ferrari 458 GT2"
     - Confirm tires are the default option
     - Set the number of AI opponents to 0
     - Turn on `penalties` and `ideal conditions`
