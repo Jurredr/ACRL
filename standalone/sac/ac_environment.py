@@ -156,7 +156,7 @@ class AcEnv(gym.Env):
         :return: The observation, reward, terminated, truncated, info
         """
         # Perform the action in the game
-        self.controller.perform(action)
+        self.controller.perform(action[0], action[1], action[2])
 
         # Get the new observations
         observation = self._update_obs(sock)
