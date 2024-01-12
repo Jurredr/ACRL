@@ -32,7 +32,10 @@ def main():
 
     # Loop until the socket is closed or the program is terminated
     with sock.connect() as conn:
+        print("Starting training...")
+
         for i in range(n_episodes):
+            print("--- Starting episode:", i + 1, "/", n_episodes)
             observation = env.reset(sock=sock)
             done = False
             score = 0
@@ -47,6 +50,9 @@ def main():
                                observation_, done)
                 agent.learn()
                 observation = observation_
+
+            print("=== Finished episode", i + 1,
+                  "/", n_episodes, "[score]:", score)
             score_history.append(score)
             avg_score = np.mean(score_history[-100:])
 
@@ -54,6 +60,8 @@ def main():
                 best_score = avg_score
                 agent.save_models()
 
+        print("Training completed! Best score:",
+              best_score, "Average score:", avg_score)
         sock.end_training()
         sock.on_close()
 
