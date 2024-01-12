@@ -91,8 +91,7 @@ class AcEnv(gym.Env):
 
         # Lap stays invalid as soon as it has been invalid once
         lap_invalid = self._invalid_flag
-        if data_dict['lap_invalid']:
-            print('lap_invalid!!!')
+        if data_dict['lap_invalid'] == 'True':
             lap_invalid = 1.0
         self._invalid_flag = lap_invalid
 
