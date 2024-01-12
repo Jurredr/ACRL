@@ -58,14 +58,14 @@ class Agent():
         :return: The action to take
         """
         # Creating a tensor from a list of numpy.ndarrays is extremely slow, so we convert the list to a single numpy.ndarray with numpy.array() before converting to a tensor.
-        print(observation)
+        # print(observation)
         # converted_observation = np.array([observation])
         # Convert the observation to a PyTorch tensor and send it to the device to get the state
         state = T.Tensor(observation).to(self.actor.device)
-        print("state", state)
+        # print("state", state)
         # Get the action from the actor network
         actions, _ = self.actor.sample_normal(state, reparameterize=False)
-        print("choose_action", actions)
+        # print("choose_action", actions)
 
         # Convert the action to a numpy array
         return actions.cpu().detach().numpy()[0]

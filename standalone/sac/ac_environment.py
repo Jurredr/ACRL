@@ -92,6 +92,7 @@ class AcEnv(gym.Env):
         # Lap stays invalid as soon as it has been invalid once
         lap_invalid = self._invalid_flag
         if data_dict['lap_invalid']:
+            print('lap_invalid!!!')
             lap_invalid = 1.0
         self._invalid_flag = lap_invalid
 
@@ -162,7 +163,7 @@ class AcEnv(gym.Env):
         :return: The observation, reward, terminated, truncated, info
         """
         # Perform the action in the game
-        print("action", action)
+        # print("action", action)
         self.controller.perform(action[0], action[1], action[2])
 
         # Get the new observations

@@ -36,10 +36,7 @@ class ACController:
         self.gamepad.left_joystick_float(
             x_value_float=steer, y_value_float=0.0)
         self.gamepad.update()
-
         steer_degrees = np.interp(steer, [-1.0, 1.0], self.steer_scale)
-        print("Throttle: ", throttle, " Brake: ",
-              brake, " Steer: ", steer_degrees)
 
     def reset_car(self):
         """
@@ -51,7 +48,8 @@ class ACController:
         keyboard.release('F10')
 
         # Move the car forward a little bit so it's over the starting line
-        self.perform(0.5, 0.0, 0.0)
+        self.perform(1.0, 0.0, 0.0)
         time.sleep(2.0)
-        self.perform(0.0, 0.0, 0.0)
+        self.perform(0.0, 1.0, 0.0)
         time.sleep(1.0)
+        self.perform(0.0, 0.0, 0.0)
