@@ -259,21 +259,20 @@ class ActorNetwork(nn.Module):
         # log_probs = log_probs.sum(1, keepdim=True)
 
         # return action, log_probs
-        mean, std = self.forward(state)
-        normal = Normal(mean, std)
-        if reparameterize:
-            x_t = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
-        else:
-            x_t = normal.sample()
+        mu, sigma = self.forward(state)
+        probabilities = Normal(mu, sigma)
 
-        y_t = T.tanh(x_t)
-        action = T.tanh(y_t)*T.tensor(self.max_action).to(self.device)
-        log_prob = normal.log_prob(x_t)
-        # Enforcing Action Bound
-        log_prob -= T.log(self.max_action *
-                          (1 - y_t.pow(2)) + self.reparam_noise)
-        log_prob = log_prob.sum(1, keepdim=True)
-        return action, log_prob
+        if reparameterize:
+            actions = probabilities.rsample()
+        else:
+            actions = probabilities.sample()
+
+        action = T.tanh(actions)*T.tensor(self.max_action).to(self.device)
+        log_probs = probabilities.log_prob(actions)
+        log_probs -= T.log(1-action.pow(2)+self.reparam_noise)
+        log_probs = log_probs.sum(1, keepdim=True)
+
+        return action, log_probs
 
     def save_checkpoint(self):
         """
