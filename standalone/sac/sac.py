@@ -57,11 +57,12 @@ class Agent():
         :param observation: The observation of the environment
         :return: The action to take
         """
-        # Creating a tensor from a list of numpy.ndarrays is extremely slow, so we conver the list to a single numpy.ndarray with numpy.array() before converting to a tensor.
+        # Creating a tensor from a list of numpy.ndarrays is extremely slow, so we convert the list to a single numpy.ndarray with numpy.array() before converting to a tensor.
         print(observation)
         # converted_observation = np.array([observation])
         # Convert the observation to a PyTorch tensor and send it to the device to get the state
         state = T.Tensor(observation).to(self.actor.device)
+        print("state", state)
         # Get the action from the actor network
         actions, _ = self.actor.sample_normal(state, reparameterize=False)
 

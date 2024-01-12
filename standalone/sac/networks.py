@@ -241,35 +241,23 @@ class ActorNetwork(nn.Module):
         :param reparameterize: Whether to reparameterize the network. (default: True)
         :return: The action to take.
         """
-        # mu, sigma = self.forward(state)
-        # probabilities = Normal(mu, sigma)
-
-        # # Re-parameterization trick.
-        # if reparameterize:
-        #     actions = probabilities.rsample()
-        # else:
-        #     actions = probabilities.sample()
-
-        # # The action must be in the range of the maximum action.
-        # tanh_actions = T.tanh(actions)
-        # action = tanh_actions * T.tensor(self.max_action).to(self.device)
-        # # The log probability of the action for the loss function for updating the weights of the neural network.
-        # log_probs = probabilities.log_prob(actions)
-        # log_probs -= T.log(1 - tanh_actions.pow(2) + self.reparam_noise)
-        # log_probs = log_probs.sum(1, keepdim=True)
-
-        # return action, log_probs
+        state = state.view(-1, self.input_dims[0]
+                           )  # Reshape the state to match the expected dimensions
         mu, sigma = self.forward(state)
         probabilities = Normal(mu, sigma)
 
+        # Re-parameterization trick.
         if reparameterize:
             actions = probabilities.rsample()
         else:
             actions = probabilities.sample()
 
-        action = T.tanh(actions)*T.tensor(self.max_action).to(self.device)
+        # The action must be in the range of the maximum action.
+        tanh_actions = T.tanh(actions)
+        action = tanh_actions * T.tensor(self.max_action).to(self.device)
+        # The log probability of the action for the loss function for updating the weights of the neural network.
         log_probs = probabilities.log_prob(actions)
-        log_probs -= T.log(1-action.pow(2)+self.reparam_noise)
+        log_probs -= T.log(1 - tanh_actions.pow(2) + self.reparam_noise)
         log_probs = log_probs.sum(1, keepdim=True)
 
         return action, log_probs
