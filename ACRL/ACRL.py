@@ -26,6 +26,7 @@ except Exception as e:
     ac.log("[ACRL] Error importing libraries: %s" % e)
 
 import ac  # noqa: E402
+import acsys  # noqa: E402
 from IS_ACUtil import *  # noqa: E402
 
 # Training enabled flag
@@ -78,6 +79,9 @@ def acMain(ac_version):
     ac.setSize(btn_start, 280, 30)
     ac.addOnClickedListener(btn_start, start)
     ac.setVisible(btn_start, 1)
+
+    # Lock the camera mode
+    ac.setCameraMode(acsys.CM_HELICOPTER)
 
     # Start the respawn listener thread
     t_res = threading.Thread(target=respawn_listener)
