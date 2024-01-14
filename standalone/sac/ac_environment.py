@@ -45,7 +45,7 @@ class AcEnv(gym.Env):
         self.action_space = spaces.Box(
             low=np.array([-1.0, -1.000]),
             high=np.array([1.0, 1.000]),
-            shape=(3,),
+            shape=(2,),
             dtype=np.float32
         )
 
