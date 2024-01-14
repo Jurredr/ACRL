@@ -24,13 +24,15 @@ class ACController:
         self.gamepad.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_A)
         self.gamepad.update()
 
-    def perform(self, throttle, brake, steer):
+    def perform(self, throttle_brake, steer):
         """
         Perform the actions in the game.
         :param throttle: The throttle value.
         :param brake: The brake value.
         :param steer: The steering value.
         """
+        throttle = max(0.0, throttle_brake)
+        brake = max(0.0, -throttle_brake)
         self.gamepad.left_trigger_float(value_float=brake)
         self.gamepad.right_trigger_float(value_float=throttle)
         self.gamepad.left_joystick_float(

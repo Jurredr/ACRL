@@ -40,12 +40,11 @@ class AcEnv(gym.Env):
         )
 
         # We have a continuous action space, where we have:
-        # - A throttle, which is a number in [0.0, 1.0]
-        # - A brake, which is a number in [0.0, 1.0]
+        # - A brake/throttle value, which is a number in [-1.0, 1.0]
         # - A steering angle, which is a number in [-1.000, 1.000]
         self.action_space = spaces.Box(
-            low=np.array([0.0, 0.0, -1.000]),
-            high=np.array([1.0, 1.0, 1.000]),
+            low=np.array([-1.0, -1.000]),
+            high=np.array([1.0, 1.000]),
             shape=(3,),
             dtype=np.float32
         )
@@ -163,7 +162,7 @@ class AcEnv(gym.Env):
         """
         # Perform the action in the game
         # print("action", action)
-        self.controller.perform(action[0], action[1], action[2])
+        self.controller.perform(action[0], action[1])
 
         # Get the new observations
         observation = self._update_obs()
