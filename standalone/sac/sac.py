@@ -304,6 +304,8 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
         # d = False if ep_len == max_ep_len else d
         d = terminated or truncated
 
+        print("Action: ", a, "Reward:", r, "Done:", d)
+
         # Store experience to replay buffer
         replay_buffer.store(o, a, r, o2, d)
 

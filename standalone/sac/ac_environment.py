@@ -80,7 +80,7 @@ class AcEnv(gym.Env):
         # steer = float(data_dict['steer'])
         # lap_time = float(data_dict['lap_time'])
 
-        print(data_dict)
+        # print(data_dict)
         track_progress = float(data_dict['track_progress'])
         speed_kmh = float(data_dict['speed_kmh'])
         world_loc_x = float(data_dict['world_loc[0]'])
