@@ -319,8 +319,6 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
         print("Episode {} finished after {} timesteps, total reward = {}, furthest dist = {}".format(e + 1,
                                                                                                      ep_len, ep_ret, dist_record))
         logger.store(EpRet=ep_ret, EpLen=ep_len)
-        o, _ = env.reset()
-        ep_ret, ep_len = 0, 0
 
         if t >= update_after and t % update_every == 0:
             for j in range(update_every):
@@ -332,16 +330,14 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
 
         # Log info about epoch
         logger.log_tabular('Epoch', e)
-        # logger.log_tabular('EpRet', with_min_and_max=True)
-        # logger.log_tabular('TestEpRet', with_min_and_max=True)
-        # logger.log_tabular('EpLen', average_only=True)
-        # logger.log_tabular('TestEpLen', average_only=True)
-        # logger.log_tabular('TotalEnvInteracts', t)
-        # logger.log_tabular('Q1Vals', with_min_and_max=True)
-        # logger.log_tabular('Q2Vals', with_min_and_max=True)
-        # logger.log_tabular('LogPi', with_min_and_max=True)
-        # logger.log_tabular('LossPi', average_only=True)
-        # logger.log_tabular('LossQ', average_only=True)
+        logger.log_tabular('EpRet', with_min_and_max=True)
+        logger.log_tabular('EpLen', average_only=True)
+        logger.log_tabular('TotalEnvInteracts', t)
+        logger.log_tabular('Q1Vals', with_min_and_max=True)
+        logger.log_tabular('Q2Vals', with_min_and_max=True)
+        logger.log_tabular('LogPi', with_min_and_max=True)
+        logger.log_tabular('LossPi', average_only=True)
+        logger.log_tabular('LossQ', average_only=True)
         logger.log_tabular('Time', time.time()-start_time)
         logger.dump_tabular()
 
