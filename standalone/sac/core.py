@@ -49,6 +49,11 @@ class SquashedGaussianMLPActor(nn.Module):
         self.log_std_layer = nn.Linear(hidden_sizes[-1], act_dim)
         self.act_limit = act_limit
 
+        # Move the network to the GPU if available
+        self.device = torch.device(
+            'cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
+
     def forward(self, obs, deterministic=False, with_logprob=True):
         net_out = self.net(obs)
         mu = self.mu_layer(net_out)
@@ -92,6 +97,11 @@ class MLPQFunction(nn.Module):
         self.q = mlp([obs_dim + act_dim] +
                      list(hidden_sizes) + [1], activation)
 
+        # Move the network to the GPU if available
+        self.device = torch.device(
+            'cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
+
     def forward(self, obs, act):
         q = self.q(torch.cat([obs, act], dim=-1))
         return torch.squeeze(q, -1)  # Critical to ensure q has right shape.
@@ -115,6 +125,11 @@ class MLPActorCritic(nn.Module):
             obs_dim, act_dim, hidden_sizes, activation, act_limit)
         self.q1 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
         self.q2 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
+
+        # Move the network to the GPU if available
+        self.device = torch.device(
+            'cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
 
     def act(self, obs, deterministic=False):
         with torch.no_grad():
