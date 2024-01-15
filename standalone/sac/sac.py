@@ -145,7 +145,7 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
 
     """
 
-    logger = EpochLogger()
+    logger = EpochLogger(dict())
     logger.save_config(locals())
 
     torch.manual_seed(seed)
@@ -281,6 +281,7 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
     start_time = time.time()
     o, _ = env.reset()
     ep_ret, ep_len = 0, 0
+    dist_record = 0
 
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
@@ -304,7 +305,7 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
         # d = False if ep_len == max_ep_len else d
         d = terminated or truncated
 
-        print("Action: ", a, "Reward:", r, "Done:", d)
+        # print("Action: ", a, "Reward:", r, "Done:", d)
 
         # Store experience to replay buffer
         replay_buffer.store(o, a, r, o2, d)
@@ -313,8 +314,13 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
         # most recent observation!
         o = o2
 
+        if o[0] > dist_record:
+            dist_record = o[0]
+
         # End of trajectory handling
         if d or (ep_len == max_ep_len):
+            print("Episode finished after {} timesteps, total reward = {}, furthest dist = {}".format(
+                ep_len, ep_ret, dist_record))
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             o, _ = env.reset()
             ep_ret, ep_len = 0, 0
@@ -335,18 +341,21 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
 
             # Log info about epoch
             logger.log_tabular('Epoch', epoch)
-            logger.log_tabular('EpRet', with_min_and_max=True)
-            logger.log_tabular('TestEpRet', with_min_and_max=True)
-            logger.log_tabular('EpLen', average_only=True)
-            logger.log_tabular('TestEpLen', average_only=True)
-            logger.log_tabular('TotalEnvInteracts', t)
-            logger.log_tabular('Q1Vals', with_min_and_max=True)
-            logger.log_tabular('Q2Vals', with_min_and_max=True)
-            logger.log_tabular('LogPi', with_min_and_max=True)
-            logger.log_tabular('LossPi', average_only=True)
-            logger.log_tabular('LossQ', average_only=True)
+            # logger.log_tabular('EpRet', with_min_and_max=True)
+            # logger.log_tabular('TestEpRet', with_min_and_max=True)
+            # logger.log_tabular('EpLen', average_only=True)
+            # logger.log_tabular('TestEpLen', average_only=True)
+            # logger.log_tabular('TotalEnvInteracts', t)
+            # logger.log_tabular('Q1Vals', with_min_and_max=True)
+            # logger.log_tabular('Q2Vals', with_min_and_max=True)
+            # logger.log_tabular('LogPi', with_min_and_max=True)
+            # logger.log_tabular('LossPi', average_only=True)
+            # logger.log_tabular('LossQ', average_only=True)
             logger.log_tabular('Time', time.time()-start_time)
             logger.dump_tabular()
+
+            if epoch == epochs:
+                break
 
     sock.end_training()
     sock.on_close()
