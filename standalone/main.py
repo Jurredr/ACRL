@@ -22,51 +22,51 @@ def main():
     # Initialize the agent
     # agent = Agent(input_dims=env.observation_space.shape,
     #               env=env, n_actions=env.action_space.shape[0])
-    agent = sac(env)
+    agent = sac(env, epochs=3)
 
-    # Establish a socket connection
-    sock = ACSocket()
+    # # Establish a socket connection
+    # sock = ACSocket()
 
-    # Scores and amount of episodes to run
-    best_score = env.reward_range[0]
-    score_history = []
-    n_episodes = 500
+    # # Scores and amount of episodes to run
+    # best_score = env.reward_range[0]
+    # score_history = []
+    # n_episodes = 500
 
-    # Loop until the socket is closed or the program is terminated
-    with sock.connect() as conn:
-        print("Starting training...")
-        env.unwrapped.set_sock(sock)
+    # # Loop until the socket is closed or the program is terminated
+    # with sock.connect() as conn:
+    #     print("Starting training...")
+    #     env.unwrapped.set_sock(sock)
 
-        for i in range(n_episodes):
-            print("--- Starting episode:", i + 1, "/", n_episodes)
-            observation, _ = env.reset()
-            done = False
-            score = 0
+    #     for i in range(n_episodes):
+    #         print("--- Starting episode:", i + 1, "/", n_episodes)
+    #         observation, _ = env.reset()
+    #         done = False
+    #         score = 0
 
-            while not done:
-                action = agent.choose_action(observation)
-                observation_, reward, terminated, truncated, info = env.step(
-                    action=action)
-                done = terminated or truncated
-                score += reward
-                agent.remember(observation, action, reward,
-                               observation_, done)
-                agent.learn()
-                observation = observation_
+    #         while not done:
+    #             action = agent.choose_action(observation)
+    #             observation_, reward, terminated, truncated, info = env.step(
+    #                 action=action)
+    #             done = terminated or truncated
+    #             score += reward
+    #             agent.remember(observation, action, reward,
+    #                            observation_, done)
+    #             agent.learn()
+    #             observation = observation_
 
-            print("=== Finished episode", i + 1,
-                  "/", n_episodes, "[score]:", score)
-            score_history.append(score)
-            avg_score = np.mean(score_history[-100:])
+    #         print("=== Finished episode", i + 1,
+    #               "/", n_episodes, "[score]:", score)
+    #         score_history.append(score)
+    #         avg_score = np.mean(score_history[-100:])
 
-            if avg_score > best_score:
-                best_score = avg_score
-                agent.save_models()
+    #         if avg_score > best_score:
+    #             best_score = avg_score
+    #             agent.save_models()
 
-        print("Training completed! Best score:",
-              best_score, "Average score:", avg_score)
-        sock.end_training()
-        sock.on_close()
+    #     print("Training completed! Best score:",
+    #           best_score, "Average score:", avg_score)
+    #     sock.end_training()
+    #     sock.on_close()
 
 
 if __name__ == "__main__":

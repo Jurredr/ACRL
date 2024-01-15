@@ -6,6 +6,7 @@ from torch.optim import Adam
 import time
 import sac.core as core
 from sac.utils.logx import EpochLogger
+from ac_socket import ACSocket
 
 
 class ReplayBuffer:
@@ -150,7 +151,7 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-    env, test_env = env_fn(), env_fn()
+    env = env_fn()
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.shape[0]
 
@@ -270,20 +271,16 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
         return ac.act(torch.as_tensor(o, dtype=torch.float32),
                       deterministic)
 
-    def test_agent():
-        for j in range(num_test_episodes):
-            o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
-            while not (d or (ep_len == max_ep_len)):
-                # Take deterministic actions at test time
-                o, r, d, _ = test_env.step(get_action(o, True))
-                ep_ret += r
-                ep_len += 1
-            logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+    # Establish a socket connection
+    sock = ACSocket()
+    conn = sock.connect()
+    env.unwrapped.set_sock(sock)
 
     # Prepare for interaction with environment
     total_steps = steps_per_epoch * epochs
     start_time = time.time()
-    o, ep_ret, ep_len = env.reset(), 0, 0
+    o, _ = env.reset()
+    ep_ret, ep_len = 0, 0
 
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
@@ -297,14 +294,15 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
             a = env.action_space.sample()
 
         # Step the env
-        o2, r, d, _ = env.step(a)
+        o2, r, terminated, truncated, _ = env.step(a)
         ep_ret += r
         ep_len += 1
 
         # Ignore the "done" signal if it comes from hitting the time
         # horizon (that is, when it's an artificial terminal signal
         # that isn't based on the agent's state)
-        d = False if ep_len == max_ep_len else d
+        # d = False if ep_len == max_ep_len else d
+        d = terminated or truncated
 
         # Store experience to replay buffer
         replay_buffer.store(o, a, r, o2, d)
@@ -316,7 +314,8 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
         # End of trajectory handling
         if d or (ep_len == max_ep_len):
             logger.store(EpRet=ep_ret, EpLen=ep_len)
-            o, ep_ret, ep_len = env.reset(), 0, 0
+            o, _ = env.reset()
+            ep_ret, ep_len = 0, 0
 
         # Update handling
         if t >= update_after and t % update_every == 0:
@@ -332,9 +331,6 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
             if (epoch % save_freq == 0) or (epoch == epochs):
                 logger.save_state({'env': env}, None)
 
-            # Test the performance of the deterministic version of the agent.
-            test_agent()
-
             # Log info about epoch
             logger.log_tabular('Epoch', epoch)
             logger.log_tabular('EpRet', with_min_and_max=True)
@@ -349,3 +345,6 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
             logger.log_tabular('LossQ', average_only=True)
             logger.log_tabular('Time', time.time()-start_time)
             logger.dump_tabular()
+
+    sock.end_training()
+    sock.on_close()
