@@ -2,7 +2,9 @@ import json
 
 
 def convert_json(obj):
-    """ Convert obj to a version which can be serialized with JSON. """
+    """
+    Convert obj to a version which can be serialized with JSON.
+    """
     if is_json_serializable(obj):
         return obj
     else:
@@ -28,6 +30,9 @@ def convert_json(obj):
 
 
 def is_json_serializable(v):
+    """
+    Check if v is serializable with JSON.
+    """
     try:
         json.dumps(v)
         return True

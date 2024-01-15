@@ -192,6 +192,7 @@ class AcEnv(gym.Env):
 
     def close(self):
         """
-        Nothing to close.
+        Close the environment and the socket connection.
         """
-        print("Closing environment! (nothing to close)")
+        self._sock.end_training()
+        self._sock.on_close()

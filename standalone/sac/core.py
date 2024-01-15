@@ -7,12 +7,18 @@ from torch.distributions.normal import Normal
 
 
 def combined_shape(length, shape=None):
+    """
+    Helper functions that combines shape and length.
+    """
     if shape is None:
         return (length,)
     return (length, shape) if np.isscalar(shape) else (length, *shape)
 
 
 def mlp(sizes, activation, output_activation=nn.Identity):
+    """
+    Helper function that creates a multi-layer perceptron.
+    """
     layers = []
     for j in range(len(sizes)-1):
         act = activation if j < len(sizes)-2 else output_activation
@@ -21,6 +27,9 @@ def mlp(sizes, activation, output_activation=nn.Identity):
 
 
 def count_vars(module):
+    """
+    Helper function that counts the number of variables in a module.
+    """
     return sum([np.prod(p.shape) for p in module.parameters()])
 
 
@@ -29,6 +38,9 @@ LOG_STD_MIN = -20
 
 
 class SquashedGaussianMLPActor(nn.Module):
+    """
+    Actor network that outputs actions and log probabilities of actions.
+    """
 
     def __init__(self, obs_dim, act_dim, hidden_sizes, activation, act_limit):
         super().__init__()
@@ -71,6 +83,9 @@ class SquashedGaussianMLPActor(nn.Module):
 
 
 class MLPQFunction(nn.Module):
+    """
+    Critic network that outputs Q-values for given (obs, act) pairs.
+    """
 
     def __init__(self, obs_dim, act_dim, hidden_sizes, activation):
         super().__init__()
@@ -83,6 +98,9 @@ class MLPQFunction(nn.Module):
 
 
 class MLPActorCritic(nn.Module):
+    """
+    Actor-critic network that contains a policy and two Q-functions.
+    """
 
     def __init__(self, observation_space, action_space, hidden_sizes=(256, 256),
                  activation=nn.ReLU):
