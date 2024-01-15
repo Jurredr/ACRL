@@ -3,7 +3,7 @@ from ac_socket import ACSocket
 from gymnasium.wrappers import TimeLimit
 from gymnasium.envs.registration import register
 from sac.ac_environment import AcEnv
-from standalone.sac.sac import sac
+from sac.sac import sac
 
 
 def main():
@@ -16,13 +16,13 @@ def main():
     steer_scale = [-270, 270]
 
     # Initialize the environment, max_episode_steps is the maximum amount of steps before the episode is truncated
-    env = TimeLimit(AcEnv(max_speed=max_speed,
-                    steer_scale=steer_scale), max_episode_steps=300)
+    def env(): return TimeLimit(AcEnv(max_speed=max_speed,
+                                      steer_scale=steer_scale), max_episode_steps=300)
 
     # Initialize the agent
     # agent = Agent(input_dims=env.observation_space.shape,
     #               env=env, n_actions=env.action_space.shape[0])
-    agent = sac(env, )
+    agent = sac(env)
 
     # Establish a socket connection
     sock = ACSocket()

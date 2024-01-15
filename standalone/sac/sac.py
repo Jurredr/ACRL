@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from torch.optim import Adam
 import time
-import core
-from utils.logx import EpochLogger
+import sac.core as core
+from sac.utils.logx import EpochLogger
 
 
 class ReplayBuffer:
