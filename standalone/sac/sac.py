@@ -105,7 +105,7 @@ class SacAgent():
             the current policy and value function.
     """
 
-    def __init__(self, env, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_epochs=50,
+    def __init__(self, env, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_epochs=50,
                  replay_size=int(1e6), gamma=0.99, polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
                  update_after=1000, update_every=50, save_freq=1):
         self.env = env
@@ -135,8 +135,11 @@ class SacAgent():
         act_limit = env.action_space.high[0]
 
         # Create actor-critic module and target networks
-        ac = core.MLPActorCritic(
-            env.observation_space, env.action_space, **ac_kwargs)
+        if load_path is not None:
+            ac = torch.load(load_path)
+        else:
+            ac = core.MLPActorCritic(
+                env.observation_space, env.action_space, **ac_kwargs)
         self.ac = ac
         ac_targ = deepcopy(ac)
         self.ac_targ = ac_targ
