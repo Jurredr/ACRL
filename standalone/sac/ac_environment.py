@@ -80,7 +80,7 @@ class AcEnv(gym.Env):
         # steer = float(data_dict['steer'])
         # lap_time = float(data_dict['lap_time'])
 
-        print(data_dict)
+        # print(data_dict)
         track_progress = float(data_dict['track_progress'])
         speed_kmh = float(data_dict['speed_kmh'])
         world_loc_x = float(data_dict['world_loc[0]'])
@@ -110,29 +110,31 @@ class AcEnv(gym.Env):
         Get the reward from the current environment observations.
         :return: The reward.
         """
-        off_track_penalty = -1.0
-        lap_completion_bonus = 1.0
         observations = self._observations
 
         # Reward for how far the car has come on the track [0.0, 1.0]
         progress_reward = observations[0]
-
-        # Give a reward for the current speed, going faster is better for the lap time
         speed_reward = observations[1] / \
             self.max_speed  # Normalize speed to [0.0, 1.0]
+        invalid = observations[5] == 1.0
+        # Try to get to 10% of the track first
+        checkpoint_completed = observations[0] == 0.1
 
-        # Penalty for Going Off Track (-1.0)
-        off_track_penalty = off_track_penalty if observations[5] else 0.0
+        lap_progress_weight = 1.0
+        speed_weight = 0.5
+        invalid_penalty = -2.0
+        checkpoint_bonus = 5.0
 
-        # Lap completion bonus; an extra bonus for actually reaching the finish line (default: 1.0)
-        lap_completion_reward = lap_completion_bonus if observations[6] > 1.0 else 0.0
+        lap_progress_reward = lap_progress_weight * progress_reward
+        speed_reward = speed_weight * speed_reward
 
-        # Combine individual rewards
-        total_reward = lap_completion_reward + \
-            progress_reward + speed_reward + off_track_penalty
+        if invalid:
+            return invalid_penalty
 
-        # Minimum reward is -1.0, maximum reward is 3.0
-        return total_reward
+        if checkpoint_completed:
+            return lap_progress_reward + speed_reward + checkpoint_bonus
+
+        return lap_progress_reward + speed_reward
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
         """
@@ -171,8 +173,7 @@ class AcEnv(gym.Env):
         lap_invalid = observation[5]
         lap_count = observation[6]
         track_progress = observation[0]
-        # terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress == 1.0
-        terminated = False
+        terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress == 0.1
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False
@@ -191,6 +192,7 @@ class AcEnv(gym.Env):
 
     def close(self):
         """
-        Nothing to close.
+        Close the environment and the socket connection.
         """
-        print("Closing environment! (nothing to close)")
+        self._sock.end_training()
+        self._sock.on_close()

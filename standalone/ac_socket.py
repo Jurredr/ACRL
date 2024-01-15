@@ -39,9 +39,9 @@ class ACSocket:
         """
         try:
             self.conn.sendall(b"next_state")
-            print("[ACRL] Sent data request to client")
+            # print("[ACRL] Sent data request to client")
             self.data = self.conn.recv(1024)
-            print("[ACRL] Received data from client")
+            # print("[ACRL] Received data from client")
         except:
             print("[ACRL] No data received from client, closing socket connection")
             self.on_close()
