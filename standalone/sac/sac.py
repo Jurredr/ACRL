@@ -277,85 +277,73 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[2
     env.unwrapped.set_sock(sock)
 
     # Prepare for interaction with environment
-    total_steps = steps_per_epoch * epochs
     start_time = time.time()
-    o, _ = env.reset()
-    ep_ret, ep_len = 0, 0
-    dist_record = 0
 
-    # Main loop: collect experience in env and update/log each epoch
-    for t in range(total_steps):
+    t = 0
 
-        # Until start_steps have elapsed, randomly sample actions
-        # from a uniform distribution for better exploration. Afterwards,
-        # use the learned policy.
-        if t > start_steps:
-            a = get_action(o)
-        else:
-            a = env.action_space.sample()
+    for e in range(epochs):
+        print("Starting epoch:", e + 1, "/", epochs)
+        o, _ = env.reset()
+        ep_ret, ep_len = 0, 0
+        dist_record = 0
+        d = False
 
-        # Step the env
-        o2, r, terminated, truncated, _ = env.step(a)
-        ep_ret += r
-        ep_len += 1
+        while not d:
+            if t > start_steps:
+                a = get_action(o)
+            else:
+                a = env.action_space.sample()
 
-        # Ignore the "done" signal if it comes from hitting the time
-        # horizon (that is, when it's an artificial terminal signal
-        # that isn't based on the agent's state)
-        # d = False if ep_len == max_ep_len else d
-        d = terminated or truncated
+            if o[0] > dist_record:
+                dist_record = o[0]
 
-        # print("Action: ", a, "Reward:", r, "Done:", d)
+            # Step the env
+            o2, r, terminated, truncated, _ = env.step(a)
+            ep_ret += r
+            ep_len += 1
+            d = terminated or truncated
 
-        # Store experience to replay buffer
-        replay_buffer.store(o, a, r, o2, d)
+            # Store experience to replay buffer
+            replay_buffer.store(o, a, r, o2, d)
 
-        # Super critical, easy to overlook step: make sure to update
-        # most recent observation!
-        o = o2
+            # Super critical, easy to overlook step: make sure to update
+            # most recent observation!
+            o = o2
+            t += 1
 
-        if o[0] > dist_record:
-            dist_record = o[0]
+            if not d and t >= update_after and t % update_every == 0:
+                for j in range(update_every):
+                    batch = replay_buffer.sample_batch(batch_size)
+                    update(data=batch)
 
-        # End of trajectory handling
-        if d or (ep_len == max_ep_len):
-            print("Episode finished after {} timesteps, total reward = {}, furthest dist = {}".format(
-                ep_len, ep_ret, dist_record))
-            logger.store(EpRet=ep_ret, EpLen=ep_len)
-            o, _ = env.reset()
-            ep_ret, ep_len = 0, 0
+        print("Episode {} finished after {} timesteps, total reward = {}, furthest dist = {}".format(e + 1,
+                                                                                                     ep_len, ep_ret, dist_record))
+        logger.store(EpRet=ep_ret, EpLen=ep_len)
+        o, _ = env.reset()
+        ep_ret, ep_len = 0, 0
 
-        # Update handling
         if t >= update_after and t % update_every == 0:
             for j in range(update_every):
                 batch = replay_buffer.sample_batch(batch_size)
                 update(data=batch)
 
-        # End of epoch handling
-        if (t+1) % steps_per_epoch == 0:
-            epoch = (t+1) // steps_per_epoch
+        if e % save_freq == 0 or (e == epochs-1):
+            logger.save_state({'env': env}, None)
 
-            # Save model
-            if (epoch % save_freq == 0) or (epoch == epochs):
-                logger.save_state({'env': env}, None)
-
-            # Log info about epoch
-            logger.log_tabular('Epoch', epoch)
-            # logger.log_tabular('EpRet', with_min_and_max=True)
-            # logger.log_tabular('TestEpRet', with_min_and_max=True)
-            # logger.log_tabular('EpLen', average_only=True)
-            # logger.log_tabular('TestEpLen', average_only=True)
-            # logger.log_tabular('TotalEnvInteracts', t)
-            # logger.log_tabular('Q1Vals', with_min_and_max=True)
-            # logger.log_tabular('Q2Vals', with_min_and_max=True)
-            # logger.log_tabular('LogPi', with_min_and_max=True)
-            # logger.log_tabular('LossPi', average_only=True)
-            # logger.log_tabular('LossQ', average_only=True)
-            logger.log_tabular('Time', time.time()-start_time)
-            logger.dump_tabular()
-
-            if epoch == epochs:
-                break
+        # Log info about epoch
+        logger.log_tabular('Epoch', e)
+        # logger.log_tabular('EpRet', with_min_and_max=True)
+        # logger.log_tabular('TestEpRet', with_min_and_max=True)
+        # logger.log_tabular('EpLen', average_only=True)
+        # logger.log_tabular('TestEpLen', average_only=True)
+        # logger.log_tabular('TotalEnvInteracts', t)
+        # logger.log_tabular('Q1Vals', with_min_and_max=True)
+        # logger.log_tabular('Q2Vals', with_min_and_max=True)
+        # logger.log_tabular('LogPi', with_min_and_max=True)
+        # logger.log_tabular('LossPi', average_only=True)
+        # logger.log_tabular('LossQ', average_only=True)
+        logger.log_tabular('Time', time.time()-start_time)
+        logger.dump_tabular()
 
     sock.end_training()
     sock.on_close()

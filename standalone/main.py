@@ -16,13 +16,13 @@ def main():
     steer_scale = [-270, 270]
 
     # Initialize the environment, max_episode_steps is the maximum amount of steps before the episode is truncated
-    def env(): return AcEnv(max_speed=max_speed,
-                            steer_scale=steer_scale)
+    def env(): return TimeLimit(AcEnv(max_speed=max_speed,
+                                      steer_scale=steer_scale), max_episode_steps=300)
 
     # Initialize the agent
     # agent = Agent(input_dims=env.observation_space.shape,
     #               env=env, n_actions=env.action_space.shape[0])
-    agent = sac(env, epochs=3, max_ep_len=300, steps_per_epoch=300)
+    agent = sac(env, epochs=3)
 
     # # Establish a socket connection
     # sock = ACSocket()
