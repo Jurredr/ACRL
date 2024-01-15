@@ -171,8 +171,7 @@ class AcEnv(gym.Env):
         lap_invalid = observation[5]
         lap_count = observation[6]
         track_progress = observation[0]
-        # terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress == 1.0
-        terminated = False
+        terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress == 0.1
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False

@@ -22,7 +22,7 @@ def main():
     # Initialize the agent
     # agent = Agent(input_dims=env.observation_space.shape,
     #               env=env, n_actions=env.action_space.shape[0])
-    agent = sac(env, epochs=3)
+    agent = sac(env, epochs=5, steps_per_epoch=100)
 
     # # Establish a socket connection
     # sock = ACSocket()
