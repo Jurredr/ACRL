@@ -1,206 +1,351 @@
+from copy import deepcopy
+import itertools
 import numpy as np
-import torch as T
-import torch.nn.functional as F
-from sac.buffer import ReplayBuffer
-from sac.networks import ActorNetwork, CriticNetwork, ValueNetwork
+import torch
+from torch.optim import Adam
+import time
+import core
+from utils.logx import EpochLogger
 
 
-class Agent():
+class ReplayBuffer:
     """
-    The agent class that will be used to train the agent.
+    A simple FIFO experience replay buffer for SAC agents.
     """
 
-    def __init__(self, alpha=0.0003, beta=0.0003, input_dims=[8], env=None, gamma=0.99, n_actions=2, max_size=1000000, tau=0.005, batch_size=256, reward_scale=2):
-        """
-        Initialize the agent.
-        :param alpha: The learning rate of the actor network (default: 0.0003 from the paper)
-        :param beta: The learning rate of the critic network (default: 0.0003 from the paper)
-        :param input_dims: The dimensions of the input
-        :param env: The environment
-        :param gamma: The discount factor (default: 0.99 from the paper)
-        :param n_actions: The number of actions (default: 2)
-        :param max_size: The maximum size of the replay buffer (default: 1000000)
-        :param tau: The target value network update rate (soft update, so slightly detune parameters) (default: 0.005)
-        :param batch_size: The batch size (default: 256)
-        :param reward_scale: The scale of the reward (default: 2)
-        """
-        self.gamma = gamma
-        self.tau = tau
+    def __init__(self, obs_dim, act_dim, size):
+        self.obs_buf = np.zeros(core.combined_shape(
+            size, obs_dim), dtype=np.float32)
+        self.obs2_buf = np.zeros(core.combined_shape(
+            size, obs_dim), dtype=np.float32)
+        self.act_buf = np.zeros(core.combined_shape(
+            size, act_dim), dtype=np.float32)
+        self.rew_buf = np.zeros(size, dtype=np.float32)
+        self.done_buf = np.zeros(size, dtype=np.float32)
+        self.ptr, self.size, self.max_size = 0, 0, size
 
-        # The memory of the agent
-        self.memory = ReplayBuffer(max_size, input_dims, n_actions)
-        self.batch_size = batch_size
+    def store(self, obs, act, rew, next_obs, done):
+        self.obs_buf[self.ptr] = obs
+        self.obs2_buf[self.ptr] = next_obs
+        self.act_buf[self.ptr] = act
+        self.rew_buf[self.ptr] = rew
+        self.done_buf[self.ptr] = done
+        self.ptr = (self.ptr+1) % self.max_size
+        self.size = min(self.size+1, self.max_size)
 
-        # The actor network
-        self.actor = ActorNetwork(
-            alpha, input_dims, n_actions=n_actions, name='actor', max_action=env.action_space.high)
+    def sample_batch(self, batch_size=32):
+        idxs = np.random.randint(0, self.size, size=batch_size)
+        batch = dict(obs=self.obs_buf[idxs],
+                     obs2=self.obs2_buf[idxs],
+                     act=self.act_buf[idxs],
+                     rew=self.rew_buf[idxs],
+                     done=self.done_buf[idxs])
+        return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in batch.items()}
 
-        # The critic networks (we have two, we will take the minimum of the two)
-        self.critic_1 = CriticNetwork(
-            beta, input_dims, n_actions=n_actions, name='critic_1')
-        self.critic_2 = CriticNetwork(
-            beta, input_dims, n_actions=n_actions, name='critic_2')
 
-        # The value and target value networks
-        self.value = ValueNetwork(beta, input_dims, name='value')
-        self.target_value = ValueNetwork(beta, input_dims, name='target_value')
+def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0,
+        steps_per_epoch=4000, epochs=50, replay_size=int(1e6), gamma=0.99,
+        polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
+        update_after=1000, update_every=50, num_test_episodes=10, max_ep_len=1000, save_freq=1):
+    """
+    Soft Actor-Critic (SAC)
 
-        # The scale of the reward
-        self.scale = reward_scale
 
-        # Set the target value network to the same parameters as the value network
-        self.update_network_parameters(tau=1)
+    Args:
+        env_fn : A function which creates a copy of the environment.
+            The environment must satisfy the OpenAI Gym API.
 
-    def choose_action(self, observation):
-        """
-        Choose an action based on the observation.
-        :param observation: The observation of the environment
-        :return: The action to take
-        """
-        # Creating a tensor from a list of numpy.ndarrays is extremely slow, so we convert the list to a single numpy.ndarray with numpy.array() before converting to a tensor.
-        # print(observation)
-        # converted_observation = np.array([observation])
-        # Convert the observation to a PyTorch tensor and send it to the device to get the state
-        state = T.Tensor(observation).to(self.actor.device)
-        # print("state", state)
-        # Get the action from the actor network
-        actions, _ = self.actor.sample_normal(state, reparameterize=False)
-        # print("choose_action", actions)
+        actor_critic: The constructor method for a PyTorch Module with an ``act`` 
+            method, a ``pi`` module, a ``q1`` module, and a ``q2`` module.
+            The ``act`` method and ``pi`` module should accept batches of 
+            observations as inputs, and ``q1`` and ``q2`` should accept a batch 
+            of observations and a batch of actions as inputs. When called, 
+            ``act``, ``q1``, and ``q2`` should return:
 
-        # Convert the action to a numpy array
-        return actions.cpu().detach().numpy()[0]
+            ===========  ================  ======================================
+            Call         Output Shape      Description
+            ===========  ================  ======================================
+            ``act``      (batch, act_dim)  | Numpy array of actions for each 
+                                           | observation.
+            ``q1``       (batch,)          | Tensor containing one current estimate
+                                           | of Q* for the provided observations
+                                           | and actions. (Critical: make sure to
+                                           | flatten this!)
+            ``q2``       (batch,)          | Tensor containing the other current 
+                                           | estimate of Q* for the provided observations
+                                           | and actions. (Critical: make sure to
+                                           | flatten this!)
+            ===========  ================  ======================================
 
-    def remember(self, state, action, reward, new_state, episode_done):
-        """
-        Interface function between the agent and its memory.
-        :param state: The state of the environment
-        :param action: The action taken
-        :param reward: The reward received
-        :param new_state: The new state of the environment
-        :param done: Whether the episode is done or not
-        """
-        self.memory.store_transition(
-            state, action, reward, new_state, episode_done)
+            Calling ``pi`` should return:
 
-    def update_network_parameters(self, tau=None):
-        """
-        Update the parameters of the target value network to the parameters of the value network (with a slight detune).
-        :param tau: The update rate
-        """
-        if tau is None:
-            tau = self.tau
+            ===========  ================  ======================================
+            Symbol       Shape             Description
+            ===========  ================  ======================================
+            ``a``        (batch, act_dim)  | Tensor containing actions from policy
+                                           | given observations.
+            ``logp_pi``  (batch,)          | Tensor containing log probabilities of
+                                           | actions in ``a``. Importantly: gradients
+                                           | should be able to flow back into ``a``.
+            ===========  ================  ======================================
 
-        # Get the parameters of the target value and value networks
-        target_value_params = self.target_value.named_parameters()
-        value_params = self.value.named_parameters()
+        ac_kwargs (dict): Any kwargs appropriate for the ActorCritic object 
+            you provided to SAC.
 
-        # Convert the parameters to dictionaries
-        target_value_state_dict = dict(target_value_params)
-        value_state_dict = dict(value_params)
+        seed (int): Seed for random number generators.
 
-        # Update the parameters with a slight detune
-        for name in value_state_dict:
-            value_state_dict[name] = tau * value_state_dict[name].clone() + \
-                (1 - tau) * target_value_state_dict[name].clone()
+        steps_per_epoch (int): Number of steps of interaction (state-action pairs) 
+            for the agent and the environment in each epoch.
 
-        # Load the new parameters into the target value network
-        self.target_value.load_state_dict(value_state_dict)
+        epochs (int): Number of epochs to run and train agent.
 
-    def save_models(self):
-        """
-        Save the models.
-        """
-        print('[ACRL] ... saving all models ...')
-        self.actor.save_checkpoint()
-        self.value.save_checkpoint()
-        self.target_value.save_checkpoint()
-        self.critic_1.save_checkpoint()
-        self.critic_2.save_checkpoint()
+        replay_size (int): Maximum length of replay buffer.
 
-    def load_models(self):
-        """
-        Load the models.
-        """
-        print('[ACRL] ... loading all models ...')
-        self.actor.load_checkpoint()
-        self.value.load_checkpoint()
-        self.target_value.load_checkpoint()
-        self.critic_1.load_checkpoint()
-        self.critic_2.load_checkpoint()
+        gamma (float): Discount factor. (Always between 0 and 1.)
 
-    def learn(self):
-        """
-        Learn from the memory.
-        """
-        # If the memory is not large enough, don't learn
-        if self.memory.mem_cntr < self.batch_size:
-            return
+        polyak (float): Interpolation factor in polyak averaging for target 
+            networks. Target networks are updated towards main networks 
+            according to:
 
-        # Sample our buffer: get the state, action, reward, new state, and done state from the memory
-        state, action, reward, new_state, done = self.memory.sample_buffer(
-            self.batch_size)
+            .. math:: \\theta_{\\text{targ}} \\leftarrow 
+                \\rho \\theta_{\\text{targ}} + (1-\\rho) \\theta
 
-        # Convert everything to PyTorch tensors and send them to the device
-        reward = T.tensor(reward, dtype=T.float).to(self.actor.device)
-        done = T.tensor(done).to(self.actor.device)
-        state_ = T.tensor(new_state, dtype=T.float).to(self.actor.device)
-        state = T.tensor(state, dtype=T.float).to(self.actor.device)
-        action = T.tensor(action, dtype=T.float).to(self.actor.device)
+            where :math:`\\rho` is polyak. (Always between 0 and 1, usually 
+            close to 1.)
 
-        # Calculate values of the state and new state
-        value = self.value(state).view(-1)
-        value_ = self.value(state_).view(-1)
-        value_[done] = 0.0
+        lr (float): Learning rate (used for both policy and value learning).
 
-        # Get the actions and log probabilities from the actor network
-        actions, log_probs = self.actor.sample_normal(
-            state, reparameterize=False)
-        log_probs = log_probs.view(-1)
-        # Calculate the Q values from the critic networks
-        q1_new_policy = self.critic_1.forward(state, actions)
-        q2_new_policy = self.critic_2.forward(state, actions)
-        # Take the minimum of the two to improve stability of learning (prevent overestimation bias)
-        critic_value = T.min(q1_new_policy, q2_new_policy)
-        critic_value = critic_value.view(-1)
+        alpha (float): Entropy regularization coefficient. (Equivalent to 
+            inverse of reward scale in the original SAC paper.)
 
-        # Calculate the target value and handle value network loss
-        self.value.optimizer.zero_grad()
-        value_target = critic_value - log_probs
-        value_loss = 0.5 * F.mse_loss(value, value_target)
-        value_loss.backward(retain_graph=True)
-        self.value.optimizer.step()
+        batch_size (int): Minibatch size for SGD.
 
-        # Do the same as above for actor network loss
-        actions, log_probs = self.actor.sample_normal(
-            state, reparameterize=True)
-        log_probs = log_probs.view(-1)
-        q1_new_policy = self.critic_1.forward(state, actions)
-        q2_new_policy = self.critic_2.forward(state, actions)
-        critic_value = T.min(q1_new_policy, q2_new_policy)
-        critic_value = critic_value.view(-1)
+        start_steps (int): Number of steps for uniform-random action selection,
+            before running real policy. Helps exploration.
 
-        # Calculate the actor network loss
-        actor_loss = log_probs - critic_value
-        actor_loss = T.mean(actor_loss)
-        self.actor.optimizer.zero_grad()
-        actor_loss.backward(retain_graph=True)
-        self.actor.optimizer.step()
+        update_after (int): Number of env interactions to collect before
+            starting to do gradient descent updates. Ensures replay buffer
+            is full enough for useful updates.
 
-        # Handle the critic network loss
-        self.critic_1.optimizer.zero_grad()
-        self.critic_2.optimizer.zero_grad()
-        # Handles inclusion of entropy and loss function to encourage exploration
-        q_hat = self.scale * reward + self.gamma * value_
-        q1_old_policy = self.critic_1.forward(state, action).view(-1)
-        q2_old_policy = self.critic_2.forward(state, action).view(-1)
-        critic_1_loss = 0.5 * F.mse_loss(q1_old_policy, q_hat)
-        critic_2_loss = 0.5 * F.mse_loss(q2_old_policy, q_hat)
+        update_every (int): Number of env interactions that should elapse
+            between gradient descent updates. Note: Regardless of how long 
+            you wait between updates, the ratio of env steps to gradient steps 
+            is locked to 1.
 
-        # Take the sum of the two losses, backpropagate, and step the optimizers
-        critic_loss = critic_1_loss + critic_2_loss
-        critic_loss.backward()
-        self.critic_1.optimizer.step()
-        self.critic_2.optimizer.step()
+        num_test_episodes (int): Number of episodes to test the deterministic
+            policy at the end of each epoch.
 
-        # Finally, update the network parameters for the value function
-        self.update_network_parameters()
+        max_ep_len (int): Maximum length of trajectory / episode / rollout.
+
+        logger_kwargs (dict): Keyword args for EpochLogger.
+
+        save_freq (int): How often (in terms of gap between epochs) to save
+            the current policy and value function.
+
+    """
+
+    logger = EpochLogger()
+    logger.save_config(locals())
+
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
+    env, test_env = env_fn(), env_fn()
+    obs_dim = env.observation_space.shape
+    act_dim = env.action_space.shape[0]
+
+    # Action limit for clamping: critically, assumes all dimensions share the same bound!
+    act_limit = env.action_space.high[0]
+
+    # Create actor-critic module and target networks
+    ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
+    ac_targ = deepcopy(ac)
+
+    # Freeze target networks with respect to optimizers (only update via polyak averaging)
+    for p in ac_targ.parameters():
+        p.requires_grad = False
+
+    # List of parameters for both Q-networks (save this for convenience)
+    q_params = itertools.chain(ac.q1.parameters(), ac.q2.parameters())
+
+    # Experience buffer
+    replay_buffer = ReplayBuffer(
+        obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
+
+    # Count variables (protip: try to get a feel for how different size networks behave!)
+    var_counts = tuple(core.count_vars(module)
+                       for module in [ac.pi, ac.q1, ac.q2])
+    logger.log(
+        '\nNumber of parameters: \t pi: %d, \t q1: %d, \t q2: %d\n' % var_counts)
+
+    # Set up function for computing SAC Q-losses
+    def compute_loss_q(data):
+        o, a, r, o2, d = data['obs'], data['act'], data['rew'], data['obs2'], data['done']
+
+        q1 = ac.q1(o, a)
+        q2 = ac.q2(o, a)
+
+        # Bellman backup for Q functions
+        with torch.no_grad():
+            # Target actions come from *current* policy
+            a2, logp_a2 = ac.pi(o2)
+
+            # Target Q-values
+            q1_pi_targ = ac_targ.q1(o2, a2)
+            q2_pi_targ = ac_targ.q2(o2, a2)
+            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
+            backup = r + gamma * (1 - d) * (q_pi_targ - alpha * logp_a2)
+
+        # MSE loss against Bellman backup
+        loss_q1 = ((q1 - backup)**2).mean()
+        loss_q2 = ((q2 - backup)**2).mean()
+        loss_q = loss_q1 + loss_q2
+
+        # Useful info for logging
+        q_info = dict(Q1Vals=q1.detach().numpy(),
+                      Q2Vals=q2.detach().numpy())
+
+        return loss_q, q_info
+
+    # Set up function for computing SAC pi loss
+    def compute_loss_pi(data):
+        o = data['obs']
+        pi, logp_pi = ac.pi(o)
+        q1_pi = ac.q1(o, pi)
+        q2_pi = ac.q2(o, pi)
+        q_pi = torch.min(q1_pi, q2_pi)
+
+        # Entropy-regularized policy loss
+        loss_pi = (alpha * logp_pi - q_pi).mean()
+
+        # Useful info for logging
+        pi_info = dict(LogPi=logp_pi.detach().numpy())
+
+        return loss_pi, pi_info
+
+    # Set up optimizers for policy and q-function
+    pi_optimizer = Adam(ac.pi.parameters(), lr=lr)
+    q_optimizer = Adam(q_params, lr=lr)
+
+    # Set up model saving
+    logger.setup_pytorch_saver(ac)
+
+    def update(data):
+        # First run one gradient descent step for Q1 and Q2
+        q_optimizer.zero_grad()
+        loss_q, q_info = compute_loss_q(data)
+        loss_q.backward()
+        q_optimizer.step()
+
+        # Record things
+        logger.store(LossQ=loss_q.item(), **q_info)
+
+        # Freeze Q-networks so you don't waste computational effort
+        # computing gradients for them during the policy learning step.
+        for p in q_params:
+            p.requires_grad = False
+
+        # Next run one gradient descent step for pi.
+        pi_optimizer.zero_grad()
+        loss_pi, pi_info = compute_loss_pi(data)
+        loss_pi.backward()
+        pi_optimizer.step()
+
+        # Unfreeze Q-networks so you can optimize it at next DDPG step.
+        for p in q_params:
+            p.requires_grad = True
+
+        # Record things
+        logger.store(LossPi=loss_pi.item(), **pi_info)
+
+        # Finally, update target networks by polyak averaging.
+        with torch.no_grad():
+            for p, p_targ in zip(ac.parameters(), ac_targ.parameters()):
+                # NB: We use an in-place operations "mul_", "add_" to update target
+                # params, as opposed to "mul" and "add", which would make new tensors.
+                p_targ.data.mul_(polyak)
+                p_targ.data.add_((1 - polyak) * p.data)
+
+    def get_action(o, deterministic=False):
+        return ac.act(torch.as_tensor(o, dtype=torch.float32),
+                      deterministic)
+
+    def test_agent():
+        for j in range(num_test_episodes):
+            o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
+            while not (d or (ep_len == max_ep_len)):
+                # Take deterministic actions at test time
+                o, r, d, _ = test_env.step(get_action(o, True))
+                ep_ret += r
+                ep_len += 1
+            logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+
+    # Prepare for interaction with environment
+    total_steps = steps_per_epoch * epochs
+    start_time = time.time()
+    o, ep_ret, ep_len = env.reset(), 0, 0
+
+    # Main loop: collect experience in env and update/log each epoch
+    for t in range(total_steps):
+
+        # Until start_steps have elapsed, randomly sample actions
+        # from a uniform distribution for better exploration. Afterwards,
+        # use the learned policy.
+        if t > start_steps:
+            a = get_action(o)
+        else:
+            a = env.action_space.sample()
+
+        # Step the env
+        o2, r, d, _ = env.step(a)
+        ep_ret += r
+        ep_len += 1
+
+        # Ignore the "done" signal if it comes from hitting the time
+        # horizon (that is, when it's an artificial terminal signal
+        # that isn't based on the agent's state)
+        d = False if ep_len == max_ep_len else d
+
+        # Store experience to replay buffer
+        replay_buffer.store(o, a, r, o2, d)
+
+        # Super critical, easy to overlook step: make sure to update
+        # most recent observation!
+        o = o2
+
+        # End of trajectory handling
+        if d or (ep_len == max_ep_len):
+            logger.store(EpRet=ep_ret, EpLen=ep_len)
+            o, ep_ret, ep_len = env.reset(), 0, 0
+
+        # Update handling
+        if t >= update_after and t % update_every == 0:
+            for j in range(update_every):
+                batch = replay_buffer.sample_batch(batch_size)
+                update(data=batch)
+
+        # End of epoch handling
+        if (t+1) % steps_per_epoch == 0:
+            epoch = (t+1) // steps_per_epoch
+
+            # Save model
+            if (epoch % save_freq == 0) or (epoch == epochs):
+                logger.save_state({'env': env}, None)
+
+            # Test the performance of the deterministic version of the agent.
+            test_agent()
+
+            # Log info about epoch
+            logger.log_tabular('Epoch', epoch)
+            logger.log_tabular('EpRet', with_min_and_max=True)
+            logger.log_tabular('TestEpRet', with_min_and_max=True)
+            logger.log_tabular('EpLen', average_only=True)
+            logger.log_tabular('TestEpLen', average_only=True)
+            logger.log_tabular('TotalEnvInteracts', t)
+            logger.log_tabular('Q1Vals', with_min_and_max=True)
+            logger.log_tabular('Q2Vals', with_min_and_max=True)
+            logger.log_tabular('LogPi', with_min_and_max=True)
+            logger.log_tabular('LossPi', average_only=True)
+            logger.log_tabular('LossQ', average_only=True)
+            logger.log_tabular('Time', time.time()-start_time)
+            logger.dump_tabular()

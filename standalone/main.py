@@ -1,9 +1,9 @@
 import numpy as np
 from ac_socket import ACSocket
-from sac.sac import Agent
 from gymnasium.wrappers import TimeLimit
 from gymnasium.envs.registration import register
 from sac.ac_environment import AcEnv
+from standalone.sac.sac import sac
 
 
 def main():
@@ -20,8 +20,9 @@ def main():
                     steer_scale=steer_scale), max_episode_steps=300)
 
     # Initialize the agent
-    agent = Agent(input_dims=env.observation_space.shape,
-                  env=env, n_actions=env.action_space.shape[0])
+    # agent = Agent(input_dims=env.observation_space.shape,
+    #               env=env, n_actions=env.action_space.shape[0])
+    agent = sac(env, )
 
     # Establish a socket connection
     sock = ACSocket()
