@@ -3,7 +3,6 @@ from ac_socket import ACSocket
 from gymnasium.wrappers import TimeLimit
 from sac.ac_environment import AcEnv
 from sac.sac import SacAgent
-import os.path as osp
 
 
 def main():
