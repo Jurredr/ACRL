@@ -11,10 +11,10 @@ def main():
     The main function of the standalone application.
     It will initialize the environment and the agent, and then run the training loop.
     """
-    print(colorize("--- Assetto Corsa Reinforcement Learning ---", "purple"))
-    if input(colorize("Load previous model? (y/n): ", "cyan")) == "y":
+    print(colorize("\n--- Assetto Corsa Reinforcement Learning ---\n", "magenta"))
+    if input(colorize("Load previous model? (y/n): ", "gray")) == "y":
         load_path = input(
-            colorize("Enter model directory (relative): ", "cyan"))
+            colorize("Enter model directory (relative): ", "gray"))
         # Check if load_dir exists and if it is a directory and not empty
         if not os.path.exists(load_path):
             raise FileNotFoundError(
@@ -32,7 +32,8 @@ def main():
     else:
         load_path = None
         # If we don't load a model, we need to specify an experiment name
-        exp_name = input(colorize("Enter experiment name: ", "cyan"))
+        exp_name = input(colorize("Enter experiment name: ", "gray"))
+    print("")
 
     # Car data (Ferrari 458 GT2)
     max_speed = 270.0

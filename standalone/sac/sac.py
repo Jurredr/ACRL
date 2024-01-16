@@ -125,16 +125,15 @@ class SacAgent():
 
         # Setup the logger
         if load_path is not None:
-            logger_kwargs = dict(output_dir=load_path, exp_name=exp_name)
+            logger = EpochLogger(output_dir=load_path, exp_name=exp_name)
         else:
-            logger_kwargs = dict(exp_name=exp_name)
-
-        logger = EpochLogger(logger_kwargs)
+            logger = EpochLogger(exp_name=exp_name)
         self.logger = logger
 
+        # Load / save
         if load_path is not None:
+            # TODO: Fix this
             logger.restore_state(load_path)
-
         else:
             logger.save_config(locals())
 
