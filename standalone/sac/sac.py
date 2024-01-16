@@ -5,7 +5,7 @@ import torch
 from torch.optim import Adam
 import time
 import sac.core as core
-from utils.logx import EpochLogger, colorize
+from utils.logx import EpisodeLogger, colorize
 
 
 class ReplayBuffer:
@@ -70,7 +70,7 @@ class SacAgent():
 
         seed (int): Seed for random number generators.
 
-        n_epochs (int): Number of epochs to run and train agent.
+        n_episodes (int): Number of episodes to run and train agent.
 
         replay_size (int): Maximum length of replay buffer.
 
@@ -105,11 +105,11 @@ class SacAgent():
             you wait between updates, the ratio of env steps to gradient steps 
             is locked to 1.
 
-        save_freq (int): How often (in terms of gap between epochs) to save
+        save_freq (int): How often (in terms of gap between episodes) to save
             the current policy and value function.
     """
 
-    def __init__(self, env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_epochs=50,
+    def __init__(self, env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
                  replay_size=int(1e6), gamma=0.99, polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
                  update_after=1000, update_every=50, save_freq=1):
         self.env = env
@@ -121,13 +121,13 @@ class SacAgent():
         self.update_after = update_after
         self.update_every = update_every
         self.save_freq = save_freq
-        self.n_epochs = n_epochs
+        self.n_episodes = n_episodes
 
         # Setup the logger
         if load_path is not None:
-            logger = EpochLogger(output_dir=load_path, exp_name=exp_name)
+            logger = EpisodeLogger(output_dir=load_path, exp_name=exp_name)
         else:
-            logger = EpochLogger(exp_name=exp_name)
+            logger = EpisodeLogger(exp_name=exp_name)
         self.logger = logger
 
         # Load / save
@@ -288,7 +288,6 @@ class SacAgent():
     def train(self):
         """
         Perform SAC training on the environment.
-        :param n_epochs: The number of epochs to train for
         """
         start_time = time.time()
         total_steps = 0
@@ -296,9 +295,10 @@ class SacAgent():
         logger = self.logger
         env = self.env
 
-        # Main loop: collect experience in env and update/log each epoch
-        for e in range(self.n_epochs):
-            print(colorize("Starting epoch:", e + 1, "/", self.n_epochs, "yellow"))
+        # Main loop: collect experience in env and update/log each episode
+        for e in range(self.n_episodes):
+            print(colorize("Starting episode:", e +
+                  1, "/", self.n_episodes, "yellow"))
             observation, _ = env.reset()
             ep_reward, ep_steps = 0, 0
             done = False
@@ -335,11 +335,11 @@ class SacAgent():
 
             logger.store(EpReward=ep_reward, EpSteps=ep_steps)
 
-            if e % self.save_freq == 0 or (e == self.n_epochs-1):
+            if e % self.save_freq == 0 or (e == self.n_episodes-1):
                 logger.save_state({'env': env}, save_env=False, itr=None)
 
-            # Log info about epoch
-            logger.log_tabular('Epoch', e)
+            # Log info about episode
+            logger.log_tabular('Episode', e)
             logger.log_tabular('EpReward', with_min_and_max=True)
             logger.log_tabular('EpSteps', average_only=True)
             logger.log_tabular('TotalSteps', total_steps)

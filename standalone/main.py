@@ -44,7 +44,7 @@ def main():
                     steer_scale=steer_scale), max_episode_steps=300)
 
     # Initialize the agent
-    agent = SacAgent(env, exp_name, load_path, n_epochs=2,
+    agent = SacAgent(env, exp_name, load_path, n_episodes=2,
                      update_after=100, update_every=10)
 
     # Establish a socket connection
