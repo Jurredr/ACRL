@@ -6,6 +6,7 @@ from gymnasium import spaces
 
 from ac_controller import ACController
 from ac_socket import ACSocket
+from sac.utils.logx import colorize
 
 
 class AcEnv(gym.Env):
@@ -72,7 +73,7 @@ class AcEnv(gym.Env):
             data_dict = dict(map(lambda x: x.split(':'), data_str.split(',')))
         except:
             # If the data is invalid, throw error and return empty dict
-            print("Error parsing data, returning empty dict!")
+            print(colorize("Error parsing data, returning empty dict!", "red"))
             return {}
 
         # throttle = float(data_dict['throttle'])
@@ -188,7 +189,7 @@ class AcEnv(gym.Env):
         """
         Render the environment; a PyGame renderer is not needed for AC.
         """
-        print("Rendering not supported for this environment!")
+        print(colorize("Rendering not supported for this environment!", "red"))
 
     def close(self):
         """

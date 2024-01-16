@@ -5,7 +5,7 @@ import torch
 from torch.optim import Adam
 import time
 import sac.core as core
-from sac.utils.logx import EpochLogger
+from utils.logx import EpochLogger, colorize
 
 
 class ReplayBuffer:
@@ -298,7 +298,7 @@ class SacAgent():
 
         # Main loop: collect experience in env and update/log each epoch
         for e in range(self.n_epochs):
-            print("Starting epoch:", e + 1, "/", self.n_epochs)
+            print(colorize("Starting epoch:", e + 1, "/", self.n_epochs, "yellow"))
             observation, _ = env.reset()
             ep_reward, ep_steps = 0, 0
             done = False
