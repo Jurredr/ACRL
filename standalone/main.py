@@ -19,7 +19,7 @@ def main():
                     steer_scale=steer_scale), max_episode_steps=300)
 
     # Initialize the agent
-    agent = SacAgent(env, n_epochs=50)
+    agent = SacAgent(env, n_epochs=2, update_after=100, update_every=10)
 
     # Establish a socket connection
     sock = ACSocket()

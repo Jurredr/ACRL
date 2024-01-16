@@ -327,13 +327,15 @@ class SacAgent():
 
             # Log info about epoch
             logger.log_tabular('Epoch', e)
-            logger.log_tabular('EpRet', with_min_and_max=True)
-            logger.log_tabular('EpLen', average_only=True)
+            logger.log_tabular('EpReward', with_min_and_max=True)
+            logger.log_tabular('EpSteps', average_only=True)
             logger.log_tabular('TotalSteps', total_steps)
-            logger.log_tabular('Q1Vals', with_min_and_max=True)
-            logger.log_tabular('Q2Vals', with_min_and_max=True)
-            logger.log_tabular('LogPi', with_min_and_max=True)
-            logger.log_tabular('LossPi', average_only=True)
+            if total_steps >= self.update_after:
+                logger.log_tabular('Q1Vals', with_min_and_max=True)
+                logger.log_tabular('Q2Vals', with_min_and_max=True)
+                logger.log_tabular('LogPi', with_min_and_max=True)
+                logger.log_tabular('LossPi', average_only=True)
+                logger.log_tabular('LossQ', average_only=True)
             logger.log_tabular('Time', time.time()-start_time)
             logger.dump_tabular()
 
