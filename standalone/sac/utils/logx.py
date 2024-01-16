@@ -142,7 +142,7 @@ class Logger:
             with open(osp.join(self.output_dir, "config.json"), 'w') as out:
                 out.write(output)
 
-    def save_state(self, state_dict, itr=None):
+    def save_state(self, state_dict, save_env=False, itr=None):
         """
         Saves the state of an experiment.
 
@@ -164,11 +164,12 @@ class Logger:
             itr: An int, or None. Current iteration of training.
         """
         if proc_id() == 0:
-            fname = 'vars.pkl' if itr is None else 'vars%d.pkl' % itr
-            try:
-                joblib.dump(state_dict, osp.join(self.output_dir, fname))
-            except:
-                self.log('Warning: could not pickle state_dict.', color='red')
+            if save_env:
+                fname = 'env.pkl' if itr is None else 'env%d.pkl' % itr
+                try:
+                    joblib.dump(state_dict, osp.join(self.output_dir, fname))
+                except:
+                    self.log('Warning: could not pickle state_dict.', color='red')
             if hasattr(self, 'pytorch_saver_elements'):
                 self._pytorch_simple_save(itr)
 

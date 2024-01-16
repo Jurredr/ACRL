@@ -1,7 +1,3 @@
-import os
-import pickle
-import time
-import joblib
 import numpy as np
 from ac_socket import ACSocket
 from gymnasium.wrappers import TimeLimit
@@ -23,6 +19,7 @@ def main():
     env = TimeLimit(AcEnv(max_speed=max_speed,
                     steer_scale=steer_scale), max_episode_steps=300)
 
+    print("--- Assetto Corsa Reinforcement Learning ---")
     exp_name = input("Enter experiment name: ")
 
     # Initialize the agent

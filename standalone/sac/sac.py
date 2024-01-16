@@ -325,7 +325,7 @@ class SacAgent():
             logger.store(EpReward=ep_reward, EpSteps=ep_steps)
 
             if e % self.save_freq == 0 or (e == self.n_epochs-1):
-                logger.save_state({'env': env}, None)
+                logger.save_state({'env': env}, save_env=False, itr=None)
 
             # Log info about epoch
             logger.log_tabular('Epoch', e)
