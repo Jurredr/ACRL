@@ -1,8 +1,9 @@
-import numpy as np
+import os
 from ac_socket import ACSocket
 from gymnasium.wrappers import TimeLimit
 from sac.ac_environment import AcEnv
 from sac.sac import SacAgent
+from sac.utils.logx import colorize
 
 
 def main():
@@ -10,6 +11,29 @@ def main():
     The main function of the standalone application.
     It will initialize the environment and the agent, and then run the training loop.
     """
+    print(colorize("--- Assetto Corsa Reinforcement Learning ---", "purple"))
+    if input(colorize("Load previous model? (y/n): ", "cyan")) == "y":
+        load_path = input(
+            colorize("Enter model directory (relative): ", "cyan"))
+        # Check if load_dir exists and if it is a directory and not empty
+        if not os.path.exists(load_path):
+            raise FileNotFoundError(
+                colorize("Directory does not exist!", "red"))
+        if not os.path.isdir(load_path):
+            raise NotADirectoryError(
+                colorize("Path is not a directory!", "red"))
+        if not os.listdir(load_path):
+            raise ValueError(colorize("Directory is empty!", "red"))
+
+        # The experiment name is the name of the directory
+        exp_name = load_path.split("/")[-1]
+        print(colorize("Loading model for experiment '" +
+              exp_name + "' from " + load_path + "...", "green"))
+    else:
+        load_path = None
+        # If we don't load a model, we need to specify an experiment name
+        exp_name = input(colorize("Enter experiment name: ", "cyan"))
+
     # Car data (Ferrari 458 GT2)
     max_speed = 270.0
     steer_scale = [-270, 270]
@@ -18,11 +42,8 @@ def main():
     env = TimeLimit(AcEnv(max_speed=max_speed,
                     steer_scale=steer_scale), max_episode_steps=300)
 
-    print("--- Assetto Corsa Reinforcement Learning ---")
-    exp_name = input("Enter experiment name: ")
-
     # Initialize the agent
-    agent = SacAgent(env, exp_name, n_epochs=2,
+    agent = SacAgent(env, exp_name, load_path, n_epochs=2,
                      update_after=100, update_every=10)
 
     # Establish a socket connection

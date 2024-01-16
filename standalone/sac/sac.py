@@ -64,6 +64,8 @@ class SacAgent():
 
         exp_name : Name for the experiment.
 
+        load_path (str): Path to load the model from. (or None to not load)
+
         ac_kwargs (dict): Any kwargs appropriate for the ActorCritic object.
 
         seed (int): Seed for random number generators.
@@ -122,9 +124,19 @@ class SacAgent():
         self.n_epochs = n_epochs
 
         # Setup the logger
-        logger = EpochLogger(dict(exp_name))
+        if load_path is not None:
+            logger_kwargs = dict(output_dir=load_path, exp_name=exp_name)
+        else:
+            logger_kwargs = dict(exp_name=exp_name)
+
+        logger = EpochLogger(logger_kwargs)
         self.logger = logger
-        logger.save_config(locals())
+
+        if load_path is not None:
+            logger.restore_state(load_path)
+
+        else:
+            logger.save_config(locals())
 
         # Set the amount of threads to the amount that's available
         torch.set_num_threads(torch.get_num_threads())

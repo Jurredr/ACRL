@@ -142,6 +142,35 @@ class Logger:
             with open(osp.join(self.output_dir, "config.json"), 'w') as out:
                 out.write(output)
 
+    def load_config(self):
+        """
+        Load an experiment configuration from a saved JSON file.
+
+        This function reads the "config.json" file saved by save_config
+        and returns the configuration as a Python dictionary.
+
+        Returns:
+            dict: Experiment configuration loaded from the file.
+        """
+        config_path = osp.join(self.output_dir, "config.json")
+        if osp.exists(config_path):
+            with open(config_path, 'r') as infile:
+                config_json = json.load(infile)
+
+            # Remove the 'exp_name' key if it was added during saving
+            config = config_json.copy()
+            if 'exp_name' in config:
+                del config['exp_name']
+
+            print(colorize('Loaded config:\n', color='cyan', bold=True))
+            print(json.dumps(config, separators=(
+                ',', ':\t'), indent=4, sort_keys=True))
+
+            return config
+        else:
+            print(colorize('Config file not found.', color='red'))
+            return None
+
     def save_state(self, state_dict, save_env=False, itr=None):
         """
         Saves the state of an experiment.
@@ -196,11 +225,9 @@ class Logger:
         if proc_id() == 0:
             assert hasattr(self, 'pytorch_saver_elements'), \
                 "First have to setup saving with self.setup_pytorch_saver"
-            fpath = 'pyt_save'
-            fpath = osp.join(self.output_dir, fpath)
             fname = 'model' + ('%d' % itr if itr is not None else '') + '.pt'
-            fname = osp.join(fpath, fname)
-            os.makedirs(fpath, exist_ok=True)
+            fname = osp.join(self.output_dir, fname)
+            os.makedirs(self.output_dir, exist_ok=True)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # We are using a non-recommended way of saving PyTorch models,
