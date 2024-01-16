@@ -62,6 +62,8 @@ class SacAgent():
     Args:
         env_fn : An OpenAI Gym environment.
 
+        exp_name : Name for the experiment.
+
         ac_kwargs (dict): Any kwargs appropriate for the ActorCritic object.
 
         seed (int): Seed for random number generators.
@@ -105,7 +107,7 @@ class SacAgent():
             the current policy and value function.
     """
 
-    def __init__(self, env, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_epochs=50,
+    def __init__(self, env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_epochs=50,
                  replay_size=int(1e6), gamma=0.99, polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
                  update_after=1000, update_every=50, save_freq=1):
         self.env = env
@@ -120,7 +122,7 @@ class SacAgent():
         self.n_epochs = n_epochs
 
         # Setup the logger
-        logger = EpochLogger(dict())
+        logger = EpochLogger(dict(exp_name))
         self.logger = logger
         logger.save_config(locals())
 
