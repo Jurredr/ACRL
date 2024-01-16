@@ -77,8 +77,8 @@ class Logger:
             self.output_dir = output_dir or osp.join(
                 os.getcwd(), "experiments", exp_name or "experiment_%i" % int(time.time()))
             if osp.exists(self.output_dir):
-                print(
-                    "Warning: Log dir %s already exists! Storing info there anyway." % self.output_dir)
+                print(colorize(
+                    "Warning: Log dir %s already exists! Storing info there anyway." % self.output_dir, "yellow", bold=True))
             else:
                 os.makedirs(self.output_dir)
             self.output_file = open(
@@ -137,8 +137,8 @@ class Logger:
         if proc_id() == 0:
             output = json.dumps(config_json, separators=(
                 ',', ':\t'), indent=4, sort_keys=True)
-            print(colorize('Saving config:\n', color='cyan', bold=True))
-            print(output)
+            print(colorize('Saving config', color='cyan', bold=True))
+            # print(output)
             with open(osp.join(self.output_dir, "config.json"), 'w') as out:
                 out.write(output)
 

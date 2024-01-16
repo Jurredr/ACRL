@@ -5,7 +5,7 @@ import torch
 from torch.optim import Adam
 import time
 import sac.core as core
-from utils.logx import EpisodeLogger, colorize
+from sac.utils.logx import EpisodeLogger, colorize
 
 
 class ReplayBuffer:

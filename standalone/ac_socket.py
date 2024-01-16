@@ -25,14 +25,15 @@ class ACSocket:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((host, port))
         self.sock.listen(0)
-        print(colorize(("[ACRL] Socket listening on", (host, port)), "cyan"))
+        print(colorize("[ACRL] Socket listening on (" +
+              str(host) + ", " + str(port) + ")", "cyan"))
 
     def connect(self) -> socket:
         """
         Wait for an incoming connection and return the socket object.
         """
         self.conn, self.addr = self.sock.accept()
-        print(colorize(("[ACRL] Connected by", self.addr), "cyan"))
+        print(colorize("[ACRL] Connected by " + str(self.addr), "cyan"))
         return self.conn
 
     def update(self) -> None:
@@ -66,5 +67,5 @@ class ACSocket:
         """
         Ensure socket is properly closed before terminating program.
         """
-        print(colorize("[ACRL] Closing socket connection"), "cyan")
+        print(colorize("[ACRL] Closing socket connection", "cyan"))
         self.sock.close()

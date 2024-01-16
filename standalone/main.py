@@ -2,8 +2,8 @@ import os
 from ac_socket import ACSocket
 from gymnasium.wrappers import TimeLimit
 from sac.ac_environment import AcEnv
-from sac.sac import SacAgent
 from sac.utils.logx import colorize
+from sac.sac import SacAgent
 
 
 def main():
@@ -11,7 +11,8 @@ def main():
     The main function of the standalone application.
     It will initialize the environment and the agent, and then run the training loop.
     """
-    print(colorize("\n--- Assetto Corsa Reinforcement Learning ---\n", "magenta"))
+    print(colorize("\n--- Assetto Corsa Reinforcement Learning ---\n",
+          "magenta", bold=True))
     if input(colorize("Load previous model? (y/n): ", "gray")) == "y":
         load_path = input(
             colorize("Enter model directory (relative): ", "gray"))
