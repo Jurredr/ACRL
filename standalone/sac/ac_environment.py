@@ -148,12 +148,14 @@ class AcEnv(gym.Env):
         # Try to get to 10% of the track first
         checkpoint_completed = observations[0] >= 0.1
 
-        lap_progress_weight = 10.0
-        speed_weight = 0.5
-        invalid_penalty = -20.0
+        lap_progress_weight = 50.0
+        speed_weight = 1.0
+        invalid_penalty = -500.0
         checkpoint_bonus = 50.0
 
-        lap_progress_reward = pow(lap_progress_weight * progress_reward, 2)
+        # Make sure lap_progress is not smaller than 1 so it doesn't scale negatively when squared
+        lap_progress_reward = pow(
+            max(lap_progress_weight * progress_reward, 1), 2)
         speed_reward = pow(speed_weight * speed_reward, 2)
 
         if invalid:
