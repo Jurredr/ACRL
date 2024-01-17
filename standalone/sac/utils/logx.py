@@ -78,7 +78,9 @@ class Logger:
                 os.getcwd(), "experiments", exp_name or "experiment_%i" % int(time.time()))
             if osp.exists(self.output_dir):
                 print(colorize(
-                    "Warning: Log dir %s already exists! Storing info there anyway." % self.output_dir, "yellow", bold=True))
+                    "Warning: Log dir %s already exists!" % self.output_dir, "yellow", bold=True))
+                if input(colorize("Continue? [y/n]")) != "y":
+                    exit(-1)
             else:
                 os.makedirs(self.output_dir)
             self.output_file = open(

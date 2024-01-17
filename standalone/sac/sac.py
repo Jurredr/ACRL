@@ -66,6 +66,8 @@ class SacAgent():
 
         load_path (str): Path to load the model from. (or None to not load)
 
+        save_path (str): Path to save the model to. (or None to use exp_name)
+
         ac_kwargs (dict): Any kwargs appropriate for the ActorCritic object.
 
         seed (int): Seed for random number generators.
@@ -109,7 +111,7 @@ class SacAgent():
             the current policy and value function.
     """
 
-    def __init__(self, env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
+    def __init__(self, env, exp_name, load_path=None, save_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
                  replay_size=int(1e6), gamma=0.99, polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
                  update_after=1000, update_every=50, save_freq=1):
         self.env = env
@@ -125,7 +127,7 @@ class SacAgent():
 
         # Setup the logger
         if load_path is not None:
-            logger = EpisodeLogger(output_dir=load_path, exp_name=exp_name)
+            logger = EpisodeLogger(output_dir=save_path, exp_name=exp_name)
         else:
             logger = EpisodeLogger(exp_name=exp_name)
         self.logger = logger
