@@ -297,9 +297,6 @@ class SacAgent():
 
         dist_highscore = 0
 
-        # Initial logger values before update_after is reached
-        logger.store(Q1vals=[], Q2vals=[], LogPi=[], LossPi=0, LossQ=0)
-
         # Main loop: collect experience in env and update/log each episode
         for e in range(self.n_episodes):
             print(colorize("Starting episode: " + str(e +
@@ -379,7 +376,7 @@ class SacAgent():
                 logger.save_state({'env': env}, save_env=False, itr=None)
 
             # Log info about episode
-            logger.log_tabular('Episode', e)
+            logger.log_tabular('Episode', e + 1)
             logger.log_tabular('RewardThisEp', ep_reward)
             logger.log_tabular('EpDist', observation[0])
             logger.log_tabular('EpSteps', ep_steps)
@@ -388,11 +385,11 @@ class SacAgent():
             logger.log_tabular('EpReward', with_min_and_max=True)
             logger.log_tabular('EpSteps', average_only=True)
             logger.log_tabular('TotalSteps', total_steps)
-            logger.log_tabular('Q1Vals', with_min_and_max=True)
-            logger.log_tabular('Q2Vals', with_min_and_max=True)
-            logger.log_tabular('LogPi', with_min_and_max=True)
-            logger.log_tabular('LossPi', average_only=True)
-            logger.log_tabular('LossQ', average_only=True)
+            # logger.log_tabular('Q1Vals', with_min_and_max=True)
+            # logger.log_tabular('Q2Vals', with_min_and_max=True)
+            # logger.log_tabular('LogPi', with_min_and_max=True)
+            # logger.log_tabular('LossPi', average_only=True)
+            # logger.log_tabular('LossQ', average_only=True)
             logger.log_tabular('EpTime', time.time()-ep_start_time)
             logger.log_tabular('TotalTime', time.time()-start_time)
             logger.dump_tabular()
