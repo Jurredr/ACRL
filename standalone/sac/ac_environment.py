@@ -119,7 +119,7 @@ class AcEnv(gym.Env):
             self.max_speed  # Normalize speed to [0.0, 1.0]
         invalid = observations[5] == 1.0
         # Try to get to 10% of the track first
-        checkpoint_completed = observations[0] == 0.1
+        checkpoint_completed = observations[0] >= 0.1
 
         lap_progress_weight = 1.0
         speed_weight = 0.5
@@ -128,6 +128,33 @@ class AcEnv(gym.Env):
 
         lap_progress_reward = lap_progress_weight * progress_reward
         speed_reward = speed_weight * speed_reward
+
+        if invalid:
+            return invalid_penalty
+
+        if checkpoint_completed:
+            return lap_progress_reward + speed_reward + checkpoint_bonus
+
+        return lap_progress_reward + speed_reward
+
+    def _get_reward_exp(self):
+        observations = self._observations
+
+        # Reward for how far the car has come on the track [0.0, 1.0]
+        progress_reward = observations[0]
+        speed_reward = observations[1] / \
+            self.max_speed  # Normalize speed to [0.0, 1.0]
+        invalid = observations[5] == 1.0
+        # Try to get to 10% of the track first
+        checkpoint_completed = observations[0] >= 0.1
+
+        lap_progress_weight = 10.0
+        speed_weight = 0.5
+        invalid_penalty = -20.0
+        checkpoint_bonus = 50.0
+
+        lap_progress_reward = pow(lap_progress_weight * progress_reward, 2)
+        speed_reward = pow(speed_weight * speed_reward, 2)
 
         if invalid:
             return invalid_penalty
@@ -180,7 +207,7 @@ class AcEnv(gym.Env):
         truncated = False
 
         # Get the reward and info
-        reward = self._get_reward()
+        reward = self._get_reward_exp()
         info = self._get_info()
 
         return observation, reward, terminated, truncated, info
