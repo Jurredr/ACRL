@@ -309,9 +309,10 @@ class SacAgent():
             ep_reward, ep_steps = 0, 0
             done = False
 
-            # We store the speed, x, y, z, of the car in an array for every step
-            drive_data = [[observation[1], observation[2],
-                           observation[3], observation[4]]]
+            # We store the array speed, x, y, z, of the car in a numpy array for every step
+            initial_drive_data = np.array(
+                [observation[1], observation[2], observation[3], observation[4]])
+            drive_data = np.array(initial_drive_data)
 
             while not done:
                 step_start_time = time.time()
@@ -340,8 +341,8 @@ class SacAgent():
                 total_steps += 1
 
                 # We store the speed, x, y, z, of the car in an array for every step
-                drive_data.append(
-                    [observation[1], observation[2], observation[3], observation[4]])
+                drive_data.append(np.array(
+                    [observation[1], observation[2], observation[3], observation[4]]))
 
                 if total_steps >= self.update_after and total_steps % self.update_every == 0:
                     for j in range(self.update_every):
