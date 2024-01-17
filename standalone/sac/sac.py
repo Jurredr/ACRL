@@ -66,8 +66,6 @@ class SacAgent():
 
         load_path (str): Path to load the model from. (or None to not load)
 
-        save_path (str): Path to save the model to. (or None to use exp_name)
-
         ac_kwargs (dict): Any kwargs appropriate for the ActorCritic object.
 
         seed (int): Seed for random number generators.
@@ -113,7 +111,7 @@ class SacAgent():
         step_duration_limit (int): The maximum duration of a single step in the environment in ms.
     """
 
-    def __init__(self, env, exp_name, load_path=None, save_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
+    def __init__(self, env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
                  replay_size=int(1e6), gamma=0.99, polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
                  update_after=1000, update_every=50, save_freq=1, step_duration_limit=None):
         self.env = env
@@ -129,10 +127,7 @@ class SacAgent():
         self.step_duration_limit = step_duration_limit
 
         # Setup the logger
-        if load_path is not None:
-            logger = EpisodeLogger(output_dir=save_path, exp_name=exp_name)
-        else:
-            logger = EpisodeLogger(exp_name=exp_name)
+        logger = EpisodeLogger(exp_name=exp_name)
         self.logger = logger
 
         # Load / save
@@ -302,6 +297,9 @@ class SacAgent():
 
         dist_highscore = 0
 
+        # Initial logger values before update_after is reached
+        logger.store(Q1vals=[], Q2vals=[], LogPi=[], LossPi=0, LossQ=0)
+
         # Main loop: collect experience in env and update/log each episode
         for e in range(self.n_episodes):
             print(colorize("Starting episode: " + str(e +
@@ -311,7 +309,13 @@ class SacAgent():
             ep_reward, ep_steps = 0, 0
             done = False
 
+            # We store the speed, x, y, z, of the car in an array for every step
+            drive_data = [[observation[1], observation[2],
+                           observation[3], observation[4]]]
+
             while not done:
+                step_start_time = time.time()
+
                 # Uniform-random action sampling for the first start_steps steps (before running real policy)
                 # This is to encourage exploration
                 if total_steps > self.start_steps:
@@ -335,52 +339,64 @@ class SacAgent():
                 observation = observation_
                 total_steps += 1
 
+                # We store the speed, x, y, z, of the car in an array for every step
+                drive_data.append(
+                    [observation[1], observation[2], observation[3], observation[4]])
+
                 if total_steps >= self.update_after and total_steps % self.update_every == 0:
                     for j in range(self.update_every):
                         batch = self.replay_buffer.sample_batch(
                             self.batch_size)
                         self._update(data=batch)
 
+                if self.step_duration_limit is not None:
+                    # Stall the program if the episode was too short
+                    step_duration = time.time() - step_start_time
+                    if step_duration < self.step_duration_limit:
+                        print(colorize("Step duration not reached yet, stalling for " + str(self.step_duration_limit -
+                                                                                            step_duration) + "ms...", "yellow"))
+                        time.sleep(self.step_duration_limit - step_duration)
+
+            # Store the episode data
             logger.store(EpReward=ep_reward, EpSteps=ep_steps)
 
+            # Drive data
+            speed = [x[0] for x in drive_data]
+            avg_speed = np.mean(speed)
+            x_path = [x[1] for x in drive_data]
+            y_path = [x[2] for x in drive_data]
+            z_path = [x[3] for x in drive_data]
+
+            # Save the drive data to a JSON file
+            logger.save_drive_data(speed, x_path, y_path, z_path)
+
+            # Update the highscore
             if observation[0] > dist_highscore:
                 dist_highscore = observation[0]
 
+            # Save model
             if e % self.save_freq == 0 or (e == self.n_episodes-1):
                 logger.save_state({'env': env}, save_env=False, itr=None)
 
             # Log info about episode
             logger.log_tabular('Episode', e)
             logger.log_tabular('Reward this ep', ep_reward)
-            logger.log_tabular('Dist this ep', observation[0])
-            logger.log_tabular('Steps this ep', ep_steps)
-            logger.log_tabular('Dist highscore', dist_highscore)
+            logger.log_tabular('EpDist', observation[0])
+            logger.log_tabular('EpSteps', ep_steps)
+            logger.log_tabular('EpAvgSpeed', avg_speed)
+            logger.log_tabular('DistHigh', dist_highscore)
+            logger.log_tabular('EpReward')
             logger.log_tabular('EpReward', with_min_and_max=True)
             logger.log_tabular('EpSteps', average_only=True)
             logger.log_tabular('TotalSteps', total_steps)
-            if total_steps >= self.update_after:
-                logger.log_tabular('Q1Vals', with_min_and_max=True)
-                logger.log_tabular('Q2Vals', with_min_and_max=True)
-                logger.log_tabular('LogPi', with_min_and_max=True)
-                logger.log_tabular('LossPi', average_only=True)
-                logger.log_tabular('LossQ', average_only=True)
-            else:
-                logger.log_tabular('Q1Vals', 0)
-                logger.log_tabular('Q2Vals', 0)
-                logger.log_tabular('LogPi', 0)
-                logger.log_tabular('LossPi', 0)
-                logger.log_tabular('LossQ', 0)
-            logger.log_tabular('EpTime (ms)', time.time()-ep_start_time)
-            logger.log_tabular('TotalTime (ms)', time.time()-start_time)
+            logger.log_tabular('Q1Vals', with_min_and_max=True)
+            logger.log_tabular('Q2Vals', with_min_and_max=True)
+            logger.log_tabular('LogPi', with_min_and_max=True)
+            logger.log_tabular('LossPi', average_only=True)
+            logger.log_tabular('LossQ', average_only=True)
+            logger.log_tabular('EpTime', time.time()-ep_start_time)
+            logger.log_tabular('TotalTime', time.time()-start_time)
             logger.dump_tabular()
-
-            if self.step_duration_limit is not None:
-                # Stall the program if the episode was too short
-                ep_duration = time.time() - ep_start_time
-                if ep_duration < self.step_duration_limit:
-                    print(colorize("Episode duration not reached yet, stalling for " + str(self.step_duration_limit -
-                          ep_duration) + "ms...", "yellow"))
-                    time.sleep(self.step_duration_limit - ep_duration)
 
         # Close the environment
         self.env.close()

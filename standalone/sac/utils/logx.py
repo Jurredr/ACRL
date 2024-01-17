@@ -144,6 +144,25 @@ class Logger:
             with open(osp.join(self.output_dir, "config.json"), 'w') as out:
                 out.write(output)
 
+    def save_drive_data(self, speed, x_path, y_path, z_path):
+        """
+        Save the data from a driving episode to a JSON file.
+        """
+        # Create a dictionary with the data
+        data = {
+            "speed": speed,
+            "x_path": x_path,
+            "y_path": y_path,
+            "z_path": z_path
+        }
+
+        # Create the file name
+        fname = osp.join(self.output_dir, "drive_data.json")
+
+        # Save the data to the file
+        with open(fname, 'w') as outfile:
+            json.dump(data, outfile, indent=4, sort_keys=True)
+
     def load_config(self):
         """
         Load an experiment configuration from a saved JSON file.

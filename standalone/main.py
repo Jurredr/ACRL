@@ -30,14 +30,10 @@ def main():
         exp_name = load_path.split("/")[-1]
         print(colorize("Loading model for experiment '" +
               exp_name + "' from " + load_path + "...", "green"))
-        save_path = input(
-            "Enter a new experiment name, which will also be the save path (leave empty to overwrite): ")
-        if save_path == "":
-            save_path = load_path
     else:
         load_path = None
-        # If we don't load a model, we need to specify an experiment name
-        exp_name = input(colorize("Enter experiment name: ", "gray"))
+
+    exp_name = input(colorize("Enter experiment name: ", "gray"))
     print("")
 
     # Car data (Ferrari 458 GT2)
@@ -60,7 +56,7 @@ def main():
         "update_every": 50
     }
 
-    agent = SacAgent(env, exp_name, load_path, save_path, **hyperparams)
+    agent = SacAgent(env, exp_name, load_path, **hyperparams)
 
     # Establish a socket connection
     sock = ACSocket()
