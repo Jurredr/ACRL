@@ -46,11 +46,21 @@ def main():
 
     # Initialize the environment, max_episode_steps is the maximum amount of steps before the episode is truncated
     env = TimeLimit(AcEnv(max_speed=max_speed,
-                    steer_scale=steer_scale), max_episode_steps=300)
+                    steer_scale=steer_scale), max_episode_steps=1000)
 
     # Initialize the agent
-    agent = SacAgent(env, exp_name, load_path, save_path, n_episodes=500,
-                     update_after=200, update_every=50)
+    hyperparams = {
+        "gamma": 0.99,
+        "polyak": 0.995,  # 1.0 - tau (soft target update)
+        "lr": 1e-3,
+        "alpha": 0.2,
+        "batch_size": 256,
+        "n_episodes": 1000,
+        "update_after": 10000,
+        "update_every": 50
+    }
+
+    agent = SacAgent(env, exp_name, load_path, save_path, **hyperparams)
 
     # Establish a socket connection
     sock = ACSocket()
