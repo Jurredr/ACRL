@@ -310,9 +310,8 @@ class SacAgent():
             done = False
 
             # We store the array speed, x, y, z, of the car in a numpy array for every step
-            initial_drive_data = np.array(
-                [observation[1], observation[2], observation[3], observation[4]])
-            drive_data = np.array(initial_drive_data)
+            drive_data = [[observation[1], observation[2],
+                           observation[3], observation[4]]]
 
             while not done:
                 step_start_time = time.time()
@@ -341,8 +340,8 @@ class SacAgent():
                 total_steps += 1
 
                 # We store the speed, x, y, z, of the car in an array for every step
-                drive_data.append(np.array(
-                    [observation[1], observation[2], observation[3], observation[4]]))
+                drive_data.append(
+                    [observation[1], observation[2], observation[3], observation[4]])
 
                 if total_steps >= self.update_after and total_steps % self.update_every == 0:
                     for j in range(self.update_every):
@@ -361,12 +360,12 @@ class SacAgent():
             # Store the episode data
             logger.store(EpReward=ep_reward, EpSteps=ep_steps)
 
-            # Drive data
-            speed = [x[0] for x in drive_data]
+            # Drive data to numpy arrays
+            speed = np.array([x[0] for x in drive_data])
             avg_speed = np.mean(speed)
-            x_path = [x[1] for x in drive_data]
-            y_path = [x[2] for x in drive_data]
-            z_path = [x[3] for x in drive_data]
+            x_path = np.array([x[1] for x in drive_data])
+            y_path = np.array([x[2] for x in drive_data])
+            z_path = np.array([x[3] for x in drive_data])
 
             # Save the drive data to a JSON file
             logger.save_drive_data(speed, x_path, y_path, z_path)
