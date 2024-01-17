@@ -383,7 +383,6 @@ class SacAgent():
             logger.log_tabular('EpAvgSpeed', avg_speed)
             logger.log_tabular('DistHigh', dist_highscore)
             logger.log_tabular('EpReward', with_min_and_max=True)
-            logger.log_tabular('EpSteps', average_only=True)
             logger.log_tabular('TotalSteps', total_steps)
             # logger.log_tabular('Q1Vals', with_min_and_max=True)
             # logger.log_tabular('Q2Vals', with_min_and_max=True)
