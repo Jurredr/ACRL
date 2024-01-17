@@ -66,6 +66,8 @@ class SacAgent():
 
         load_path (str): Path to load the model from. (or None to not load)
 
+        save_path (str): Path to save the model to. (or None to use exp_name)
+
         ac_kwargs (dict): Any kwargs appropriate for the ActorCritic object.
 
         seed (int): Seed for random number generators.
@@ -111,7 +113,7 @@ class SacAgent():
         step_duration_limit (int): The maximum duration of a single step in the environment in ms.
     """
 
-    def __init__(self, env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
+    def __init__(self, env, exp_name, load_path=None, save_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
                  replay_size=int(1e6), gamma=0.99, polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
                  update_after=1000, update_every=50, save_freq=1, step_duration_limit=None):
         self.env = env
@@ -128,7 +130,7 @@ class SacAgent():
 
         # Setup the logger
         if load_path is not None:
-            logger = EpisodeLogger(output_dir=load_path, exp_name=exp_name)
+            logger = EpisodeLogger(output_dir=save_path, exp_name=exp_name)
         else:
             logger = EpisodeLogger(exp_name=exp_name)
         self.logger = logger
@@ -298,10 +300,12 @@ class SacAgent():
         logger = self.logger
         env = self.env
 
+        dist_highscore = 0
+
         # Main loop: collect experience in env and update/log each episode
         for e in range(self.n_episodes):
-            print(colorize("Starting episode:", e +
-                  1, "/", self.n_episodes, "yellow"))
+            print(colorize("Starting episode: " + str(e +
+                  1) + "/" + str(self.n_episodes), "yellow"))
             ep_start_time = time.time()
             observation, _ = env.reset()
             ep_reward, ep_steps = 0, 0
@@ -339,11 +343,18 @@ class SacAgent():
 
             logger.store(EpReward=ep_reward, EpSteps=ep_steps)
 
+            if observation[0] > dist_highscore:
+                dist_highscore = observation[0]
+
             if e % self.save_freq == 0 or (e == self.n_episodes-1):
                 logger.save_state({'env': env}, save_env=False, itr=None)
 
             # Log info about episode
             logger.log_tabular('Episode', e)
+            logger.log_tabular('Reward this ep', ep_reward)
+            logger.log_tabular('Dist this ep', observation[0])
+            logger.log_tabular('Steps this ep', ep_steps)
+            logger.log_tabular('Dist highscore', dist_highscore)
             logger.log_tabular('EpReward', with_min_and_max=True)
             logger.log_tabular('EpSteps', average_only=True)
             logger.log_tabular('TotalSteps', total_steps)
@@ -353,6 +364,12 @@ class SacAgent():
                 logger.log_tabular('LogPi', with_min_and_max=True)
                 logger.log_tabular('LossPi', average_only=True)
                 logger.log_tabular('LossQ', average_only=True)
+            else:
+                logger.log_tabular('Q1Vals', 0)
+                logger.log_tabular('Q2Vals', 0)
+                logger.log_tabular('LogPi', 0)
+                logger.log_tabular('LossPi', 0)
+                logger.log_tabular('LossQ', 0)
             logger.log_tabular('EpTime (ms)', time.time()-ep_start_time)
             logger.log_tabular('TotalTime (ms)', time.time()-start_time)
             logger.dump_tabular()

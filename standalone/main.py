@@ -30,6 +30,10 @@ def main():
         exp_name = load_path.split("/")[-1]
         print(colorize("Loading model for experiment '" +
               exp_name + "' from " + load_path + "...", "green"))
+        save_path = input(
+            "Enter a new experiment name, which will also be the save path (leave empty to overwrite): ")
+        if save_path == "":
+            save_path = load_path
     else:
         load_path = None
         # If we don't load a model, we need to specify an experiment name
@@ -45,8 +49,8 @@ def main():
                     steer_scale=steer_scale), max_episode_steps=300)
 
     # Initialize the agent
-    agent = SacAgent(env, exp_name, load_path, n_episodes=2,
-                     update_after=100, update_every=10)
+    agent = SacAgent(env, exp_name, load_path, save_path, n_episodes=500,
+                     update_after=200, update_every=50)
 
     # Establish a socket connection
     sock = ACSocket()
