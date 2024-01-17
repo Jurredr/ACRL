@@ -107,11 +107,13 @@ class SacAgent():
 
         save_freq (int): How often (in terms of gap between episodes) to save
             the current policy and value function.
+
+        step_duration_limit (int): The maximum duration of a single step in the environment in ms.
     """
 
     def __init__(self, env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
                  replay_size=int(1e6), gamma=0.99, polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
-                 update_after=1000, update_every=50, save_freq=1):
+                 update_after=1000, update_every=50, save_freq=1, step_duration_limit=None):
         self.env = env
         self.gamma = gamma
         self.alpha = alpha
@@ -122,6 +124,7 @@ class SacAgent():
         self.update_every = update_every
         self.save_freq = save_freq
         self.n_episodes = n_episodes
+        self.step_duration_limit = step_duration_limit
 
         # Setup the logger
         if load_path is not None:
@@ -299,6 +302,7 @@ class SacAgent():
         for e in range(self.n_episodes):
             print(colorize("Starting episode:", e +
                   1, "/", self.n_episodes, "yellow"))
+            ep_start_time = time.time()
             observation, _ = env.reset()
             ep_reward, ep_steps = 0, 0
             done = False
@@ -349,8 +353,17 @@ class SacAgent():
                 logger.log_tabular('LogPi', with_min_and_max=True)
                 logger.log_tabular('LossPi', average_only=True)
                 logger.log_tabular('LossQ', average_only=True)
-            logger.log_tabular('Time', time.time()-start_time)
+            logger.log_tabular('EpTime (ms)', time.time()-ep_start_time)
+            logger.log_tabular('TotalTime (ms)', time.time()-start_time)
             logger.dump_tabular()
+
+            if self.step_duration_limit is not None:
+                # Stall the program if the episode was too short
+                ep_duration = time.time() - ep_start_time
+                if ep_duration < self.step_duration_limit:
+                    print(colorize("Episode duration not reached yet, stalling for " + str(self.step_duration_limit -
+                          ep_duration) + "ms...", "yellow"))
+                    time.sleep(self.step_duration_limit - ep_duration)
 
         # Close the environment
         self.env.close()
