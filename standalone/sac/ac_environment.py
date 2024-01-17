@@ -121,7 +121,7 @@ class AcEnv(gym.Env):
             return penalty_offtrack
 
         # If the car is not moving, return a penalty
-        if self._observations[1] < 1.0:
+        if self._observations[1] <= 5.0:
             return penalty_notmoving
 
         # If the car has finished the track, return a bonus
@@ -141,7 +141,7 @@ class AcEnv(gym.Env):
             return penalty_offtrack
 
         # If the car is not moving, return a penalty
-        if self._observations[1] < 1.0:
+        if self._observations[1] <= 5.0:
             return penalty_notmoving
 
         # If the car has finished the track, return a bonus
@@ -162,7 +162,7 @@ class AcEnv(gym.Env):
             return penalty_offtrack
 
         # If the car is not moving, return a penalty
-        if self._observations[1] < 1.0:
+        if self._observations[1] <= 5.0:
             return penalty_notmoving
 
         # If the car has finished the track, return a bonus
@@ -184,7 +184,7 @@ class AcEnv(gym.Env):
             return penalty_offtrack
 
         # If the car is not moving, return a penalty
-        if self._observations[1] < 1.0:
+        if self._observations[1] <= 5.0:
             return penalty_notmoving
 
         # If the car has finished the track, return a bonus
