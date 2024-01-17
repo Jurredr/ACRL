@@ -297,8 +297,8 @@ class SacAgent():
 
         # Main loop: collect experience in env and update/log each episode
         for e in range(self.n_episodes):
-            print(colorize("Starting episode:", e +
-                  1, "/", self.n_episodes, "yellow"))
+            print(colorize("Starting episode: " + (e +
+                  1) + "/" + self.n_episodes, "yellow"))
             observation, _ = env.reset()
             ep_reward, ep_steps = 0, 0
             done = False

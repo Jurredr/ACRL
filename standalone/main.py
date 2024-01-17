@@ -46,7 +46,7 @@ def main():
 
     # Initialize the agent
     agent = SacAgent(env, exp_name, load_path, n_episodes=2,
-                     update_after=100, update_every=10)
+                     update_after=100, update_every=50)
 
     # Establish a socket connection
     sock = ACSocket()
