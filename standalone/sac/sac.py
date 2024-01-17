@@ -380,12 +380,11 @@ class SacAgent():
 
             # Log info about episode
             logger.log_tabular('Episode', e)
-            logger.log_tabular('Reward this ep', ep_reward)
+            logger.log_tabular('RewardThisEp', ep_reward)
             logger.log_tabular('EpDist', observation[0])
             logger.log_tabular('EpSteps', ep_steps)
             logger.log_tabular('EpAvgSpeed', avg_speed)
             logger.log_tabular('DistHigh', dist_highscore)
-            logger.log_tabular('EpReward')
             logger.log_tabular('EpReward', with_min_and_max=True)
             logger.log_tabular('EpSteps', average_only=True)
             logger.log_tabular('TotalSteps', total_steps)
