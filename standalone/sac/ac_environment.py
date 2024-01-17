@@ -1,3 +1,4 @@
+import math
 from typing import Optional
 import numpy as np
 
@@ -32,11 +33,13 @@ class AcEnv(gym.Env):
         # - "world_loc_z": The world's z location of the car [-2000.0, 2000.0]
         # - "lap_invalid": Whether the current lap is valid [0.0, 1.0]
         # - "lap_count": The current lap count [1.0, 2.0]
+        # - "previous_track_progress": The previous track progress [0.0, 1.0]
         self.observation_space = spaces.Box(
-            low=np.array([0.000, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0]),
+            low=np.array(
+                [0.000, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0, 0.000]),
             high=np.array([1.000, max_speed, 2000.0,
-                          2000.0, 2000.0, 1.0, 2.0]),
-            shape=(7,),
+                          2000.0, 2000.0, 1.0, 2.0, 1.000]),
+            shape=(8,),
             dtype=np.float32,
         )
 
@@ -88,6 +91,7 @@ class AcEnv(gym.Env):
         world_loc_y = float(data_dict['world_loc[1]'])
         world_loc_z = float(data_dict['world_loc[2]'])
         lap_count = float(data_dict['lap_count'])
+        previous_track_progress = self._observations[0] if self._observations is not None else 0.000
 
         # Lap stays invalid as soon as it has been invalid once
         lap_invalid = self._invalid_flag
@@ -97,7 +101,7 @@ class AcEnv(gym.Env):
 
         # Update the observations
         self._observations = np.array(
-            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count], dtype=np.float32)
+            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count, previous_track_progress], dtype=np.float32)
         return self._observations
 
     def _get_info(self):
@@ -106,63 +110,102 @@ class AcEnv(gym.Env):
         """
         return {}
 
-    def _get_reward(self):
+    def _get_reward_1(self, progress_goal=1.0, penalty_offtrack=-1.0, penalty_notmoving=-0.4, bonus_finished=50.0):
         """
-        Get the reward from the current environment observations.
+        A reward considering just speed.
+        """
+        speed_reward = self._observations[1] / self.max_speed
+
+        # If the car is off track, return a penalty
+        if self._observations[5] == 1.0:
+            return penalty_offtrack
+
+        # If the car is not moving, return a penalty
+        if self._observations[1] < 1.0:
+            return penalty_notmoving
+
+        # If the car has finished the track, return a bonus
+        if self._observations[0] >= progress_goal or self._observations[6] > 1.0:
+            return speed_reward + bonus_finished
+        return speed_reward
+
+    def _get_reward_2(self, progress_goal=1.0, penalty_offtrack=-1.0, penalty_notmoving=-0.4, bonus_finished=50.0):
+        """
+        A reward considering speed and progress on track.
+        """
+        speed_reward = self._observations[1] / self.max_speed
+        progress_reward = self._observations[0]
+
+        # If the car is off track, return a penalty
+        if self._observations[5] == 1.0:
+            return penalty_offtrack
+
+        # If the car is not moving, return a penalty
+        if self._observations[1] < 1.0:
+            return penalty_notmoving
+
+        # If the car has finished the track, return a bonus
+        if self._observations[0] >= progress_goal or self._observations[6] > 1.0:
+            return progress_reward + speed_reward + bonus_finished
+        return progress_reward + speed_reward
+
+    def _get_reward_3(self, progress_goal=1.0, penalty_offtrack=-1.0, penalty_notmoving=-0.4, bonus_finished=50.0):
+        """
+        A reward just considering delta progress on track.
+        """
+        progress = self._observations[0]
+        previous_progress = self._observations[7]
+        delta_progress = progress - previous_progress
+
+        # If the car is off track, return a penalty
+        if self._observations[5] == 1.0:
+            return penalty_offtrack
+
+        # If the car is not moving, return a penalty
+        if self._observations[1] < 1.0:
+            return penalty_notmoving
+
+        # If the car has finished the track, return a bonus
+        if self._observations[0] >= progress_goal or self._observations[6] > 1.0:
+            return delta_progress + bonus_finished
+        return delta_progress
+
+    def _get_reward_4(self, progress_goal=1.0, penalty_offtrack=-1.0, penalty_notmoving=-0.4, bonus_finished=50.0):
+        """
+        A reward considering speed and delta progress on track.
+        """
+        speed_reward = self._observations[1] / self.max_speed
+        progress = self._observations[0]
+        previous_progress = self._observations[7]
+        delta_progress = progress - previous_progress
+
+        # If the car is off track, return a penalty
+        if self._observations[5] == 1.0:
+            return penalty_offtrack
+
+        # If the car is not moving, return a penalty
+        if self._observations[1] < 1.0:
+            return penalty_notmoving
+
+        # If the car has finished the track, return a bonus
+        if self._observations[0] >= progress_goal or self._observations[6] > 1.0:
+            return delta_progress + speed_reward + bonus_finished
+        return delta_progress + speed_reward
+
+    def _get_reward_5(self, weight_wrongdir=1.0, weight_offcenter=1.0, weight_extra_offcenter=1.0, extra_offcenter_penalty=False):
+        """
+        TODO: Implement the observations for this reward.
+        A reward considering speed, angle and distance from center of track.
         :return: The reward.
         """
-        observations = self._observations
+        speed_x = 10  # speed in the forward direction
+        theta = 10  # angle in degrees between car direction and track direction
+        dist_offcenter = 10  # distance from center of track
 
-        # Reward for how far the car has come on the track [0.0, 1.0]
-        progress_reward = observations[0]
-        speed_reward = observations[1] / \
-            self.max_speed  # Normalize speed to [0.0, 1.0]
-        invalid = observations[5] == 1.0
-        # Try to get to 10% of the track first
-        checkpoint_completed = observations[0] >= 0.1
-
-        lap_progress_weight = 1.0
-        speed_weight = 0.5
-        invalid_penalty = -2.0
-        checkpoint_bonus = 5.0
-
-        lap_progress_reward = lap_progress_weight * progress_reward
-        speed_reward = speed_weight * speed_reward
-
-        if invalid:
-            return invalid_penalty
-
-        if checkpoint_completed:
-            return lap_progress_reward + speed_reward + checkpoint_bonus
-
-        return lap_progress_reward + speed_reward
-
-    def _get_reward_exp(self):
-        observations = self._observations
-
-        # Reward for how far the car has come on the track [0.0, 1.0]
-        progress_reward = observations[0]
-        speed_reward = observations[1] / \
-            self.max_speed  # Normalize speed to [0.0, 1.0]
-        invalid = observations[5] == 1.0
-        # Try to get to 10% of the track first
-        checkpoint_completed = observations[0] >= 0.1
-
-        lap_progress_weight = 10.0
-        speed_weight = 0.5
-        invalid_penalty = -20.0
-        checkpoint_bonus = 50.0
-
-        lap_progress_reward = pow(lap_progress_weight * progress_reward, 2)
-        speed_reward = pow(speed_weight * speed_reward, 2)
-
-        if invalid:
-            return invalid_penalty
-
-        if checkpoint_completed:
-            return lap_progress_reward + speed_reward + checkpoint_bonus
-
-        return lap_progress_reward + speed_reward
+        reward = (speed_x * math.cos(theta)) - (weight_wrongdir *
+                                                speed_x * math.sin(theta)) - (weight_offcenter * speed_x * abs(dist_offcenter))
+        if extra_offcenter_penalty:
+            reward -= (weight_extra_offcenter * abs(dist_offcenter))
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
         """
@@ -197,17 +240,19 @@ class AcEnv(gym.Env):
         # Get the new observations
         observation = self._update_obs()
 
-        # TODO: add check if speed is too low for a while
+        # Progress goal (10% of the track)
+        progress_goal = 0.1
+
         lap_invalid = observation[5]
         lap_count = observation[6]
         track_progress = observation[0]
-        terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress == 0.1
+        terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress >= progress_goal
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False
 
         # Get the reward and info
-        reward = self._get_reward_exp()
+        reward = self._get_reward_1(progress_goal)
         info = self._get_info()
 
         return observation, reward, terminated, truncated, info
