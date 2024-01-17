@@ -148,7 +148,12 @@ class Logger:
         """
         Save the data from a driving episode to a JSON file.
         """
-        # Create a dictionary with the data
+        # All input are arrays of float32 values, but since JSON does not support float32, we convert all values to strings
+        speed = speed.astype(str).tolist()
+        x_path = x_path.astype(str).tolist()
+        y_path = y_path.astype(str).tolist()
+        z_path = z_path.astype(str).tolist()
+
         data = {
             "speed": speed,
             "x_path": x_path,
