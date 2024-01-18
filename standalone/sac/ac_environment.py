@@ -110,7 +110,7 @@ class AcEnv(gym.Env):
         """
         return {}
 
-    def _get_reward_1(self, progress_goal=1.0, penalty_offtrack=-1.0, penalty_notmoving=-0.4, bonus_finished=50.0):
+    def _get_reward_1(self, penalty_offtrack=-1.0, penalty_lowspeed=-0.4, min_speed=5.0, min_progress=0.0001, penalty_lowprogress=-0.8, progress_weights=[]):
         """
         A reward considering just speed.
         """
@@ -120,16 +120,23 @@ class AcEnv(gym.Env):
         if self._observations[5] == 1.0:
             return penalty_offtrack
 
-        # If the car is not moving, return a penalty
-        if self._observations[1] <= 5.0:
-            return penalty_notmoving
+        # If the car is making too little progress, return a penalty
+        if self._observations[0] <= self._observations[7] + min_progress:
+            return penalty_lowprogress
 
-        # If the car has finished the track, return a bonus
-        if self._observations[0] >= progress_goal or self._observations[6] > 1.0:
-            return speed_reward + bonus_finished
-        return speed_reward
+        # If the car is moving too slow, return a penalty
+        if self._observations[1] <= min_speed:
+            return penalty_lowspeed
 
-    def _get_reward_2(self, progress_goal=1.0, penalty_offtrack=-1.0, penalty_notmoving=-0.4, bonus_finished=50.0):
+        # If the car is past a certain progress point, set a weight for the reward
+        weight = 1.0
+        progress_point = int(self._observations[0] * 10)
+        if progress_point >= 1 and progress_point <= 9:
+            weight = progress_weights[progress_point - 1]
+
+        return speed_reward * weight
+
+    def _get_reward_2(self, penalty_offtrack=-1.0, penalty_lowspeed=-0.4, min_speed=5.0, min_progress=0.0001, penalty_lowprogress=-0.8, progress_weights=[]):
         """
         A reward considering speed and progress on track.
         """
@@ -140,16 +147,23 @@ class AcEnv(gym.Env):
         if self._observations[5] == 1.0:
             return penalty_offtrack
 
-        # If the car is not moving, return a penalty
-        if self._observations[1] <= 5.0:
-            return penalty_notmoving
+        # If the car is making too little progress, return a penalty
+        if self._observations[0] <= self._observations[7] + min_progress:
+            return penalty_lowprogress
 
-        # If the car has finished the track, return a bonus
-        if self._observations[0] >= progress_goal or self._observations[6] > 1.0:
-            return progress_reward + speed_reward + bonus_finished
-        return progress_reward + speed_reward
+        # If the car is moving too slow, return a penalty
+        if self._observations[1] <= min_speed:
+            return penalty_lowspeed
 
-    def _get_reward_3(self, progress_goal=1.0, penalty_offtrack=-1.0, penalty_notmoving=-0.4, bonus_finished=50.0):
+        # If the car is past a certain progress point, set a weight for the reward
+        weight = 1.0
+        progress_point = int(self._observations[0] * 10)
+        if progress_point >= 1 and progress_point <= 9:
+            weight = progress_weights[progress_point - 1]
+
+        return (progress_reward + speed_reward) * weight
+
+    def _get_reward_3(self, penalty_offtrack=-1.0, penalty_lowspeed=-0.4, min_speed=5.0, min_progress=0.0001, penalty_lowprogress=-0.8, progress_weights=[]):
         """
         A reward just considering delta progress on track.
         """
@@ -161,16 +175,23 @@ class AcEnv(gym.Env):
         if self._observations[5] == 1.0:
             return penalty_offtrack
 
-        # If the car is not moving, return a penalty
-        if self._observations[1] <= 5.0:
-            return penalty_notmoving
+        # If the car is making too little progress, return a penalty
+        if self._observations[0] <= self._observations[7] + min_progress:
+            return penalty_lowprogress
 
-        # If the car has finished the track, return a bonus
-        if self._observations[0] >= progress_goal or self._observations[6] > 1.0:
-            return delta_progress + bonus_finished
-        return delta_progress
+        # If the car is moving too slow, return a penalty
+        if self._observations[1] <= min_speed:
+            return penalty_lowspeed
 
-    def _get_reward_4(self, progress_goal=1.0, penalty_offtrack=-1.0, penalty_notmoving=-0.4, bonus_finished=50.0):
+        # If the car is past a certain progress point, set a weight for the reward
+        weight = 1.0
+        progress_point = int(self._observations[0] * 10)
+        if progress_point >= 1 and progress_point <= 9:
+            weight = progress_weights[progress_point - 1]
+
+        return delta_progress * weight
+
+    def _get_reward_4(self, penalty_offtrack=-1.0, penalty_lowspeed=-0.4, min_speed=5.0, min_progress=0.0001, penalty_lowprogress=-0.8, progress_weights=[]):
         """
         A reward considering speed and delta progress on track.
         """
@@ -183,14 +204,21 @@ class AcEnv(gym.Env):
         if self._observations[5] == 1.0:
             return penalty_offtrack
 
-        # If the car is not moving, return a penalty
-        if self._observations[1] <= 5.0:
-            return penalty_notmoving
+        # If the car is making too little progress, return a penalty
+        if self._observations[0] <= self._observations[7] + min_progress:
+            return penalty_lowprogress
 
-        # If the car has finished the track, return a bonus
-        if self._observations[0] >= progress_goal or self._observations[6] > 1.0:
-            return delta_progress + speed_reward + bonus_finished
-        return delta_progress + speed_reward
+        # If the car is moving too slow, return a penalty
+        if self._observations[1] <= min_speed:
+            return penalty_lowspeed
+
+        # If the car is past a certain progress point, set a weight for the reward
+        weight = 1.0
+        progress_point = int(self._observations[0] * 10)
+        if progress_point >= 1 and progress_point <= 9:
+            weight = progress_weights[progress_point - 1]
+
+        return (delta_progress + speed_reward) * weight
 
     def _get_reward_5(self, weight_wrongdir=1.0, weight_offcenter=1.0, weight_extra_offcenter=1.0, extra_offcenter_penalty=False):
         """
@@ -240,8 +268,18 @@ class AcEnv(gym.Env):
         # Get the new observations
         observation = self._update_obs()
 
-        # Progress goal (10% of the track)
-        progress_goal = 0.1
+        # Progress goal (100% of the track)
+        progress_goal = 1.0
+        # Penalty for going off track, only given once as termination penalty
+        penalty_offtrack = -100
+        # Penalty for going too slow
+        penalty_lowspeed, min_speed = -0.5, 10.0
+        # Penalty for making too little progress
+        penalty_lowprogress, min_progress = -0.8, 0.0001
+
+        # Progress weights (10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%) of the track
+        progress_weights = [1.3, 1.5, 1.7, 1.9, 2.1,
+                            2.3, 2.5, 2.7, 2.9, 3.1, 3.3]
 
         lap_invalid = observation[5]
         lap_count = observation[6]
@@ -252,7 +290,8 @@ class AcEnv(gym.Env):
         truncated = False
 
         # Get the reward and info
-        reward = self._get_reward_1(progress_goal)
+        reward = self._get_reward_1(penalty_offtrack, penalty_lowspeed,
+                                    min_speed, min_progress, penalty_lowprogress, progress_weights)
         info = self._get_info()
 
         return observation, reward, terminated, truncated, info
