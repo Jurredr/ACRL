@@ -50,8 +50,10 @@ class ACController:
         keyboard.release('F10')
 
         # Move the car forward a little bit so it's over the starting line
+        self.sleep(1.0)
         self.perform(1.0, 0.0)
         time.sleep(3)
         self.perform(-1.0, 0.0)
         time.sleep(2)
         self.perform(0.0, 0.0)
+        self.sleep(0.5)
