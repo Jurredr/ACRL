@@ -327,6 +327,10 @@ class SacAgent():
                 ep_steps += 1
                 done = terminated or truncated
 
+                # Store step reward and delta progress
+                logger.store(StepReward=reward)
+                logger.store(DeltaProg=(observation_[0] - observation[0]))
+
                 # Store experience to replay buffer
                 self.replay_buffer.store(observation, action,
                                          reward, observation_, done)
@@ -360,6 +364,7 @@ class SacAgent():
             # Drive data to numpy arrays
             speed = np.array([x[0] for x in drive_data])
             avg_speed = np.mean(speed)
+            logger.store(EpAvgSpeed=avg_speed)
             x_path = np.array([x[1] for x in drive_data])
             y_path = np.array([x[2] for x in drive_data])
             z_path = np.array([x[3] for x in drive_data])
@@ -370,6 +375,7 @@ class SacAgent():
             # Update the highscore
             if observation[0] > dist_highscore:
                 dist_highscore = observation[0]
+            logger.store(DistHigh=dist_highscore)
 
             # Save model
             if e % self.save_freq == 0 or (e == self.n_episodes-1):
@@ -377,12 +383,13 @@ class SacAgent():
 
             # Log info about episode
             logger.log_tabular('Episode', e + 1)
-            logger.log_tabular('RewardThisEp', ep_reward)
+            logger.log_tabular('EpReward')
+            logger.log_tabular('EpSteps')
             logger.log_tabular('EpDist', observation[0])
-            logger.log_tabular('EpSteps', ep_steps)
-            logger.log_tabular('EpAvgSpeed', avg_speed)
-            logger.log_tabular('DistHigh', dist_highscore)
-            logger.log_tabular('EpReward', with_min_and_max=True)
+            logger.log_tabular('EpAvgSpeed')
+            logger.log_tabular('DistHigh')
+            logger.log_tabular('StepReward', with_min_and_max=True)
+            logger.log_tabular('DeltaProg', with_min_and_max=True)
             logger.log_tabular('TotalSteps', total_steps)
             # logger.log_tabular('Q1Vals', with_min_and_max=True)
             # logger.log_tabular('Q2Vals', with_min_and_max=True)
