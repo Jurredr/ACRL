@@ -275,7 +275,7 @@ class AcEnv(gym.Env):
         # Penalty for going too slow
         penalty_lowspeed, min_speed = -0.5, 10.0
         # Penalty for making too little progress
-        penalty_lowprogress, min_progress = -0.8, 0.0001
+        penalty_lowprogress, min_progress = -0.8, 0
 
         # Progress weights (10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%) of the track
         progress_weights = [1.3, 1.5, 1.7, 1.9, 2.1,

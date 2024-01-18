@@ -79,7 +79,7 @@ class Logger:
             if osp.exists(self.output_dir):
                 print(colorize(
                     "Warning: Log dir %s already exists!" % self.output_dir, "yellow", bold=True))
-                if input(colorize("Continue? [y/n]")) != "y":
+                if input(colorize("Continue? [y/n] ", "gray")) != "y":
                     exit(-1)
             else:
                 os.makedirs(self.output_dir)

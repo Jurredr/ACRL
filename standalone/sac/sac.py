@@ -358,13 +358,9 @@ class SacAgent():
                                                                                             step_duration) + "ms...", "yellow"))
                         time.sleep(self.step_duration_limit - step_duration)
 
-            # Store the episode data
-            logger.store(EpReward=ep_reward, EpSteps=ep_steps)
-
             # Drive data to numpy arrays
             speed = np.array([x[0] for x in drive_data])
             avg_speed = np.mean(speed)
-            logger.store(EpAvgSpeed=avg_speed)
             x_path = np.array([x[1] for x in drive_data])
             y_path = np.array([x[2] for x in drive_data])
             z_path = np.array([x[3] for x in drive_data])
@@ -375,7 +371,6 @@ class SacAgent():
             # Update the highscore
             if observation[0] > dist_highscore:
                 dist_highscore = observation[0]
-            logger.store(DistHigh=dist_highscore)
 
             # Save model
             if e % self.save_freq == 0 or (e == self.n_episodes-1):
@@ -383,11 +378,11 @@ class SacAgent():
 
             # Log info about episode
             logger.log_tabular('Episode', e + 1)
-            logger.log_tabular('EpReward')
-            logger.log_tabular('EpSteps')
+            logger.log_tabular('EpReward', ep_reward)
+            logger.log_tabular('EpSteps', ep_steps)
             logger.log_tabular('EpDist', observation[0])
-            logger.log_tabular('EpAvgSpeed')
-            logger.log_tabular('DistHigh')
+            logger.log_tabular('EpAvgSpeed', avg_speed)
+            logger.log_tabular('DistHigh', dist_highscore)
             logger.log_tabular('StepReward', with_min_and_max=True)
             logger.log_tabular('DeltaProg', with_min_and_max=True)
             logger.log_tabular('TotalSteps', total_steps)

@@ -51,7 +51,7 @@ def main():
         "lr": 1e-3,
         "alpha": 0.2,
         "batch_size": 256,
-        "n_episodes": 1000,
+        "n_episodes": 5000,
         "update_after": 10000,
         "update_every": 50
     }
