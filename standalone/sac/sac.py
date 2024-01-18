@@ -365,7 +365,7 @@ class SacAgent():
             z_path = np.array([x[3] for x in drive_data])
 
             # Save the drive data to a JSON file
-            logger.save_drive_data(speed, x_path, y_path, z_path)
+            logger.save_drive_data(e, speed, x_path, y_path, z_path)
 
             # Update the highscore
             if observation[0] > dist_highscore:
