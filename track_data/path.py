@@ -1,6 +1,6 @@
 from cmath import cos, sin
-import math
-from scipy import optimize
+from math import degrees
+from matplotlib.animation import FuncAnimation
 from scipy.interpolate import splprep, splev
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,75 +54,72 @@ def get_distance_to_center_line(x, y):
     # The distance to the center line is the distance to the closest point on the center line
     # We can calculate this distance by calculating the distance to every point on the center line
     # and then taking the minimum of those distances
-    distances = []
-    for i in range(len(spline_points[0])):
-        # Calculate the distance to the current point
-        distance = ((x - spline_points[0][i]) **
-                    2 + (y - spline_points[1][i]) ** 2) ** 0.5
-        # Add the distance to the list of distances
-        distances.append(distance)
-    # Return the minimum distance
-    return min(distances)
 
+    distances = np.sqrt(
+        (x - spline_points[0])**2 + (y - spline_points[1])**2)
 
-def get_heading_error(x, y, velocity):
-    """
-    Calculate the difference between the car heading (velocity) and the heading of the center line point closest to the car.
-    """
-
-    # Convert velocity values to floats
-    velocity = np.array(velocity, dtype=float)
-
-    # Calculate the heading of the car
-    heading_car = np.arctan2(velocity[2], velocity[0])
-
-    # Calculate the heading of the center line point closest to the car
-    # First, calculate the distance to every point on the center line
-    distances = []
-    for i in range(len(spline_points[0])):
-        # Calculate the distance to the current point
-        distance = ((x - spline_points[0][i]) **
-                    2 + (y - spline_points[1][i]) ** 2) ** 0.5
-        # Add the distance to the list of distances
-        distances.append(distance)
     # Find the index of the point with the minimum distance
-    index = distances.index(min(distances))
-    # Calculate the heading of the closest point
-    heading_closest_point = np.arctan2(
-        spline_points[1][index] - y, spline_points[0][index] - x)
-
-    # Calculate the difference between the car heading and the heading of the closest point
-    heading_error = heading_car - heading_closest_point
-
-    # Make sure the heading error is between -pi and pi
-    if heading_error > np.pi:
-        heading_error -= 2 * np.pi
-    elif heading_error < -np.pi:
-        heading_error += 2 * np.pi
-
-    # Return the heading error in radians
-    return heading_error
+    return np.min(distances)
 
 
-# Example usage:
-# Assuming x, y, heading are the current car coordinates and heading
-# Replace with actual values
-x_car, y_car, heading_vector = xp[0], yp[0], velocity[10]
+def update(frame):
+    # Clear the previous plot
+    plt.cla()
+
+    # Plot the spline
+    plt.plot(spline_points[0], spline_points[1])
+    plt.plot(x, y, 'ro')
+
+    # Skip every uneven frame
+    time_step = frame * 10
+    x_car, y_car = xp[time_step], yp[time_step]
+
+    # Plot the start point (finish line)
+    plt.plot(x_car, y_car, 'go')
+
+    # First, calculate the distance to every point on the center line
+    distances = np.sqrt(
+        (x_car - spline_points[0])**2 + (y_car - spline_points[1])**2)
+
+    # Find the index of the point with the minimum distance
+    index = np.argmin(distances)
+
+    # Plot the point on the center line closest to the car
+    plt.plot(spline_points[0][index], spline_points[1]
+             [index], 'bo', markersize=10, zorder=-1)
+
+    # Get the next spline point and draw a line between the car and that point
+    next_point = index + 5
+    if next_point >= len(spline_points[0]):
+        next_point = 0
+
+    # Calculate the normalized direction vector from the car to the next point
+    direction_vector = np.array(
+        [spline_points[0][next_point] - x_car, spline_points[1][next_point] - y_car])
+    direction_vector /= np.linalg.norm(direction_vector)
+
+    # Plot the direction vector
+    plt.arrow(x_car, y_car, direction_vector[0] * 100,
+              direction_vector[1] * 100, color='y', zorder=15, width=2)
+
+    car_velocity = velocity[time_step]
+    # Change the car_velocity to a 2d vector
+    car_velocity = np.array([car_velocity[0], car_velocity[2]])
+    car_velocity /= np.linalg.norm(car_velocity)
+
+    # Plot the velocity vector
+    plt.arrow(x_car, y_car, car_velocity[0] * 100,
+              car_velocity[1] * 100, color='purple', zorder=15, width=2)
+
+    # Print the heading error (difference between the direction_vector and the car_velocity)
+    heading_error = np.arccos(
+        np.clip(np.dot(direction_vector, car_velocity), -1.0, 1.0))
+
+    straightness = cos(heading_error).real - sin(heading_error).real
 
 
-# Example usage of the functions
-distance_to_center = get_distance_to_center_line(x_car, y_car)
-heading_error = get_heading_error(x_car, y_car, heading_vector)
-# Radians to degrees
-print(cos(heading_error), sin(heading_error))
-heading_error = math.degrees(heading_error)
-print(cos(heading_error), sin(heading_error))
-# print(distance_to_center, heading_error)
+# Create the animation
+animation = FuncAnimation(plt.gcf(), update, frames=len(xp), interval=1)
 
-
-# Plot the spline
-# plt.plot(spline_points[0], spline_points[1])
-# plt.plot(x, y, 'ro')
-# # Plot the start point (finish line)
-# plt.plot(0, 0, 'go')
-# plt.show()
+# Show the animation
+plt.show()
