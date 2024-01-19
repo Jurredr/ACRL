@@ -317,7 +317,7 @@ class SacAgent():
                 # Check if the location is too close to 1.0 when the episode has just started, this means the car started before the start/finish line
                 if observation[0] >= 0.9 and ep_steps == 0:
                     while observation[0] >= 0.9:
-                        observation, _, _, _, _ = env.unwrapped.step([0.5, 0.0], ep_steps, ignore_done=True)
+                        observation, _, _, _, _ = env.unwrapped.step([0.5, 0.0], ignore_done=True)
                         time.sleep(0.5)
                     env.unwrapped.controller.perform(-1.0, 0.0)
                     time.sleep(1.0)
@@ -332,8 +332,7 @@ class SacAgent():
                     action = env.action_space.sample()
 
                 # Step the env
-                observation_, reward, terminated, truncated, _ = env.unwrapped.step(
-                    action, ep_steps)
+                observation_, reward, terminated, truncated, _ = env.step(action)
                 ep_reward += reward
                 ep_steps += 1
                 done = terminated or truncated
