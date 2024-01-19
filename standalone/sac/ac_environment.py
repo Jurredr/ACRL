@@ -8,6 +8,7 @@ from gymnasium import spaces
 from ac_controller import ACController
 from ac_socket import ACSocket
 from sac.utils.logx import colorize
+from sac.utils.track_spline import get_heading_error, get_distance_to_center_line
 
 
 class AcEnv(gym.Env):
@@ -20,7 +21,7 @@ class AcEnv(gym.Env):
     _invalid_flag = 0.0
     _sock = None
 
-    def __init__(self, render_mode: Optional[str] = None, max_speed=200.0, steer_scale=[-360, 360]):
+    def __init__(self, render_mode: Optional[str] = None, max_speed=200.0, steer_scale=[-360, 360], spline_points=[[], []]):
         # Initialize the controller
         self.controller = ACController(steer_scale)
         self.max_speed = max_speed
@@ -34,12 +35,14 @@ class AcEnv(gym.Env):
         # - "lap_invalid": Whether the current lap is valid [0.0, 1.0]
         # - "lap_count": The current lap count [1.0, 2.0]
         # - "previous_track_progress": The previous track progress [0.0, 1.0]
+        # - "velocity_x": The x velocity of the car
+        # - "velocity_z": The z velocity of the car
         self.observation_space = spaces.Box(
             low=np.array(
-                [0.000, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0, 0.000]),
+                [0.000, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0, 0.000, -2000.0, -2000.0]),
             high=np.array([1.000, max_speed, 2000.0,
-                          2000.0, 2000.0, 1.0, 2.0, 1.000]),
-            shape=(8,),
+                          2000.0, 2000.0, 1.0, 2.0, 1.000, 2000.0, 2000.0]),
+            shape=(10,),
             dtype=np.float32,
         )
 
@@ -52,6 +55,9 @@ class AcEnv(gym.Env):
             shape=(2,),
             dtype=np.float32
         )
+
+        # Set the spline points for the track center line
+        self.spline_points = spline_points
 
         # Assert that the render mode is valid
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -92,6 +98,8 @@ class AcEnv(gym.Env):
         world_loc_z = float(data_dict['world_loc[2]'])
         lap_count = float(data_dict['lap_count'])
         previous_track_progress = self._observations[0] if self._observations is not None else 0.000
+        velocity_x = float(data_dict['velocity[0]'])
+        velocity_z = float(data_dict['velocity[1]'])
 
         # Lap stays invalid as soon as it has been invalid once
         lap_invalid = self._invalid_flag
@@ -101,7 +109,7 @@ class AcEnv(gym.Env):
 
         # Update the observations
         self._observations = np.array(
-            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count, previous_track_progress], dtype=np.float32)
+            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count, previous_track_progress, velocity_x, velocity_z], dtype=np.float32)
         return self._observations
 
     def _get_info(self):
@@ -222,18 +230,26 @@ class AcEnv(gym.Env):
 
     def _get_reward_5(self, weight_wrongdir=1.0, weight_offcenter=1.0, weight_extra_offcenter=1.0, extra_offcenter_penalty=False):
         """
-        TODO: Implement the observations for this reward.
         A reward considering speed, angle and distance from center of track.
         :return: The reward.
         """
-        speed_x = 10  # speed in the forward direction
-        theta = 10  # angle in degrees between car direction and track direction
-        dist_offcenter = 10  # distance from center of track
+        speed = self._observations[1]  # speed in the forward direction
+        world_x = self._observations[2]
+        world_z = self._observations[4]
+        velocity_x = self._observations[8]
+        velocity_z = self._observations[9]
+        # angle in degrees between car direction and track direction
+        theta = get_heading_error(self.spline_points, world_x, world_z, np.array([
+                                  velocity_x, velocity_z]))
+        dist_offcenter = get_distance_to_center_line(
+            self.spline_points, world_x, world_z)  # distance from center of track
 
-        reward = (speed_x * math.cos(theta)) - (weight_wrongdir *
-                                                speed_x * math.sin(theta)) - (weight_offcenter * speed_x * abs(dist_offcenter))
+        reward = (speed * math.cos(theta).real) - (weight_wrongdir *
+                                                   speed * math.sin(theta).real) - (weight_offcenter * speed * abs(dist_offcenter))
         if extra_offcenter_penalty:
             reward -= (weight_extra_offcenter * abs(dist_offcenter))
+
+        return reward
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
         """
@@ -255,7 +271,7 @@ class AcEnv(gym.Env):
 
         return observation, info
 
-    def step(self, action: np.ndarray):
+    def step(self, action: np.ndarray, ignore_done: bool = False):
         """
         Perform an action in the environment and get the results.
         :param action: The action to perform
@@ -268,31 +284,26 @@ class AcEnv(gym.Env):
         # Get the new observations
         observation = self._update_obs()
 
-        # Progress goal (100% of the track)
-        progress_goal = 1.0
-        # Penalty for going off track, only given once as termination penalty
-        penalty_offtrack = -100
-        # Penalty for going too slow
-        penalty_lowspeed, min_speed = -0.5, 10.0
-        # Penalty for making too little progress
-        penalty_lowprogress, min_progress = -0.8, 0
-
-        # Progress weights (10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%) of the track
-        progress_weights = [1.3, 1.5, 1.7, 1.9, 2.1,
-                            2.3, 2.5, 2.7, 2.9, 3.1, 3.3]
+        # Progress goal (100% of the track, with 0.99 to account for errors)
+        progress_goal = 0.99
 
         lap_invalid = observation[5]
         lap_count = observation[6]
         track_progress = observation[0]
-        terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress >= progress_goal
+        if ignore_done:
+            terminated = False
+        else:
+            terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress >= progress_goal
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False
 
         # Get the reward and info
-        reward = self._get_reward_1(penalty_offtrack, penalty_lowspeed,
-                                    min_speed, min_progress, penalty_lowprogress, progress_weights)
-        info = self._get_info()
+        reward = None
+        info = None
+        if not ignore_done:
+            reward = self._get_reward_5()
+            info = self._get_info()
 
         return observation, reward, terminated, truncated, info
 

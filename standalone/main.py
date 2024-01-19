@@ -1,4 +1,6 @@
 import os
+
+import numpy as np
 from ac_socket import ACSocket
 from gymnasium.wrappers import TimeLimit
 from sac.ac_environment import AcEnv
@@ -40,9 +42,13 @@ def main():
     max_speed = 270.0
     steer_scale = [-270, 270]
 
+    # Track data (Silverstone 1967)
+    spline_points = np.loadtxt(
+        '../track_data/spline_points.csv', delimiter=',')
+
     # Initialize the environment, max_episode_steps is the maximum amount of steps before the episode is truncated
     env = TimeLimit(AcEnv(max_speed=max_speed,
-                    steer_scale=steer_scale), max_episode_steps=1000)
+                    steer_scale=steer_scale, spline_points=spline_points), max_episode_steps=1000)
 
     # Initialize the agent
     hyperparams = {
@@ -51,7 +57,7 @@ def main():
         "lr": 1e-3,
         "alpha": 0.2,
         "batch_size": 256,
-        "n_episodes": 5000,
+        "n_episodes": 10000,
         "update_after": 10000,
         "update_every": 50
     }
