@@ -117,6 +117,8 @@ def update(frame):
 
     straightness = cos(heading_error).real - sin(heading_error).real
 
+    print(get_distance_to_center_line(x_car, y_car), straightness)
+
 
 # Create the animation
 animation = FuncAnimation(plt.gcf(), update, frames=len(xp), interval=1)
