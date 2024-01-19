@@ -33,6 +33,6 @@ The project consists of two main components:
     - Turn on `penalties` and `ideal conditions`
     - Limit the framerate to 30 FPS
     - Set controls to `Gamepad`, with speed sensitivity set to 0, steering speed set to 100%, steering gamma set to 100%, and steering filter set to 0%
-8. Start the session and wait for the car to spawn on the track.
+8. Start the session and wait for the car to spawn on the track. Make sure automatic gear switching is enabled (ctrl + G).
 9. Change directory using `cd standalone`, and run the `standalone/main.py` file to start listening for an incoming connection from Assetto Corsa.
 10. Start training by clicking the `Start Training` button in the ACRL app window in Assetto Corsa. The car should start driving around the track and the model should start training. You can monitor the training progress in the console window where you started the `main.py` script.
