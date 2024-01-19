@@ -228,7 +228,7 @@ class AcEnv(gym.Env):
 
         return (delta_progress + speed_reward) * weight
 
-    def _get_reward_5(self, weight_wrongdir=1.0, weight_offcenter=1.0, weight_extra_offcenter=1.0, extra_offcenter_penalty=False):
+    def _get_reward_5(self, weight_wrongdir=1.0, weight_offcenter=1.0, weight_extra_offcenter=1.0, weight_lowspeed=1.0, min_speed=10.0, extra_offcenter_penalty=False):
         """
         A reward considering speed, angle and distance from center of track.
         :return: The reward.
@@ -245,7 +245,7 @@ class AcEnv(gym.Env):
             self.spline_points, world_x, world_z)  # distance from center of track
 
         reward = (speed * math.cos(theta).real) - (weight_wrongdir *
-                                                   speed * math.sin(theta).real) - (weight_offcenter * speed * abs(dist_offcenter))
+                                                   speed * math.sin(theta).real) - (weight_offcenter * speed * abs(dist_offcenter)) - (weight_lowspeed * max(0, min_speed - speed))
         if extra_offcenter_penalty:
             reward -= (weight_extra_offcenter * abs(dist_offcenter))
 
@@ -302,7 +302,8 @@ class AcEnv(gym.Env):
         reward = None
         info = None
         if not ignore_done:
-            reward = self._get_reward_5()
+            reward = self._get_reward_5(min_speed=10.0, weight_lowspeed=0.5, weight_offcenter=1.0,
+                                        weight_extra_offcenter=1.0, extra_offcenter_penalty=False)
             info = self._get_info()
 
         return observation, reward, terminated, truncated, info
