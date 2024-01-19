@@ -1,5 +1,6 @@
 from copy import deepcopy
 import itertools
+from gymnasium import Env
 import numpy as np
 import torch
 from torch.optim import Adam
@@ -111,7 +112,7 @@ class SacAgent():
         step_duration_limit (int): The maximum duration of a single step in the environment in ms.
     """
 
-    def __init__(self, env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
+    def __init__(self, env: Env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
                  replay_size=int(1e6), gamma=0.99, polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000,
                  update_after=1000, update_every=50, save_freq=1, step_duration_limit=None):
         self.env = env
@@ -312,6 +313,16 @@ class SacAgent():
 
             while not done:
                 step_start_time = time.time()
+
+                # Check if the location is too close to 1.0 when the episode has just started, this means the car started before the start/finish line
+                if observation[0] >= 0.9 and ep_steps == 0:
+                    while observation[0] >= 0.9:
+                        observation, _ = env.step([0.5, 0.0], ignore_done=True)
+                        time.sleep(0.5)
+                    env.unwrapped.controller.perform(-1.0, 0.0)
+                    time.sleep(1.0)
+                    env.unwrapped.controller.perform(0.0, 0.0)
+                    continue
 
                 # Uniform-random action sampling for the first start_steps steps (before running real policy)
                 # This is to encourage exploration

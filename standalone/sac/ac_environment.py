@@ -269,7 +269,7 @@ class AcEnv(gym.Env):
 
         return observation, info
 
-    def step(self, action: np.ndarray):
+    def step(self, action: np.ndarray, ignore_done: bool = False):
         """
         Perform an action in the environment and get the results.
         :param action: The action to perform
@@ -282,13 +282,16 @@ class AcEnv(gym.Env):
         # Get the new observations
         observation = self._update_obs()
 
-        # Progress goal (100% of the track)
-        progress_goal = 1.0
+        # Progress goal (100% of the track, with 0.99 to account for errors)
+        progress_goal = 0.99
 
         lap_invalid = observation[5]
         lap_count = observation[6]
         track_progress = observation[0]
-        terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress >= progress_goal
+        if ignore_done:
+            terminated = False
+        else:
+            terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress >= progress_goal
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False
