@@ -249,6 +249,8 @@ class AcEnv(gym.Env):
         if extra_offcenter_penalty:
             reward -= (weight_extra_offcenter * abs(dist_offcenter))
 
+        return reward
+
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
         """
         Reset the environment to initiate a new episode.
