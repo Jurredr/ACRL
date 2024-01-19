@@ -48,7 +48,7 @@ def main():
 
     # Initialize the environment, max_episode_steps is the maximum amount of steps before the episode is truncated
     env = TimeLimit(AcEnv(max_speed=max_speed,
-                    steer_scale=steer_scale, spline_points=spline_points), max_episode_steps=1000)
+                    steer_scale=steer_scale, spline_points=spline_points), max_episode_steps=1500)
 
     # Initialize the agent
     hyperparams = {
@@ -57,7 +57,7 @@ def main():
         "lr": 1e-3,
         "alpha": 0.2,
         "batch_size": 256,
-        "n_episodes": 1000,
+        "n_episodes": 10000,
         "update_after": 10000,
         "update_every": 50
     }
