@@ -25,8 +25,8 @@ def get_distance_to_center_line(spline_points, x, y):
     distance = np.sqrt((x - spline_points[0][index])**2 +
                        (y - spline_points[1][index])**2)
 
-    # If the distance is smaller than 2 meters, we consider it 0
-    if distance <= 2.0:
+    # If the distance is smaller than 0.5, we consider it 0
+    if distance <= 0.5:
         distance = 0.0
     return distance
 
