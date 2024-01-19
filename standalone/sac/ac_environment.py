@@ -239,13 +239,13 @@ class AcEnv(gym.Env):
         velocity_x = self._observations[8]
         velocity_z = self._observations[9]
         # angle in degrees between car direction and track direction
-        theta = get_heading_error(self.spline_points, world_x, world_z, [
-                                  velocity_x, velocity_z])
+        theta = get_heading_error(self.spline_points, world_x, world_z, np.array([
+                                  velocity_x, velocity_z]))
         dist_offcenter = get_distance_to_center_line(
             self.spline_points, world_x, world_z)  # distance from center of track
 
-        reward = (speed * math.cos(theta)) - (weight_wrongdir *
-                                              speed * math.sin(theta)) - (weight_offcenter * speed * abs(dist_offcenter))
+        reward = (speed * math.cos(theta).real) - (weight_wrongdir *
+                                                   speed * math.sin(theta).real) - (weight_offcenter * speed * abs(dist_offcenter))
         if extra_offcenter_penalty:
             reward -= (weight_extra_offcenter * abs(dist_offcenter))
 
