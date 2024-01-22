@@ -53,13 +53,15 @@ def main():
     # Initialize the agent
     hyperparams = {
         "gamma": 0.99,
-        "polyak": 0.995,  # 1.0 - tau (soft target update)
+        "polyak": 0.999,  # 1.0 - tau (soft target update)
         "lr": 1e-3,
         "alpha": 0.2,
-        "batch_size": 256,
+        "batch_size": 32,
         "n_episodes": 10000,
-        "update_after": 10000,
-        "update_every": 50
+        "update_after": 1000,
+        "update_every": 50,
+        "start_steps": 10000,
+        "replay_size": int(1e6)
     }
 
     agent = SacAgent(env, exp_name, load_path, **hyperparams)
