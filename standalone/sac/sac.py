@@ -109,7 +109,7 @@ class SacAgent():
         save_freq (int): How often (in terms of gap between episodes) to save
             the current policy and value function.
 
-        step_duration_limit (int): The maximum duration of a single step in the environment in ms.
+        step_duration_limit (int): The minimum duration of a single step in the environment in ms.
     """
 
     def __init__(self, env: Env, exp_name, load_path=None, ac_kwargs=dict(hidden_sizes=[256]*2), seed=0, n_episodes=50,
