@@ -292,7 +292,7 @@ class AcEnv(gym.Env):
         if ignore_done:
             terminated = False
         else:
-            terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress >= progress_goal
+            terminated = lap_count > 1.0 or track_progress >= progress_goal
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False
