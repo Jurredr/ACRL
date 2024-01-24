@@ -244,7 +244,9 @@ class AcEnv(gym.Env):
         dist_offcenter = get_distance_to_center_line(
             self.spline_points, world_x, world_z)  # distance from center of track
 
-        reward = math.cos(theta) * speed - abs(speed * math.sin(theta)) - abs(2 * speed * math.sin(theta) * dist_offcenter)
+        # reward = math.cos(theta) * speed - abs(speed * math.sin(theta)) - abs(2 * speed * math.sin(theta) * dist_offcenter)
+        reward = math.cos(theta) - abs(math.sin(theta)) - \
+            abs(dist_offcenter) + speed / self.max_speed
         if extra_offcenter_penalty:
             reward -= (weight_extra_offcenter * abs(dist_offcenter))
 

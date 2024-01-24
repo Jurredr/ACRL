@@ -39,7 +39,7 @@ def main():
     print("")
 
     # Car data (Ferrari 458 GT2)
-    max_speed = 270.0
+    max_speed = 180.0
     steer_scale = [-270, 270]
 
     # Track data (Silverstone 1967)
