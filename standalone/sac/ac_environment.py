@@ -35,13 +35,13 @@ class AcEnv(gym.Env):
         # - "lap_invalid": Whether the current lap is valid [0.0, 1.0]
         # - "lap_count": The current lap count [1.0, 2.0]
         # - "previous_track_progress": The previous track progress [0.0, 1.0]
-        # - "velocity_x": The x velocity of the car
-        # - "velocity_z": The z velocity of the car
+        # - "heading_error": The difference between the car heading and the heading of the center line point closest to the car [0.0, 2.0 * pi]
+        # - "dist_offcenter": The distance of the car to the center line
         self.observation_space = spaces.Box(
             low=np.array(
-                [0.000, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0, 0.000, -2000.0, -2000.0]),
+                [0.000, 0.0, -2000.0, -2000.0, -2000.0, 0.0, 1.0, 0.000, 0, 0]),
             high=np.array([1.000, max_speed, 2000.0,
-                          2000.0, 2000.0, 1.0, 2.0, 1.000, 2000.0, 2000.0]),
+                          2000.0, 2000.0, 1.0, 2.0, 1.000, 2.0 * math.pi, 500]),
             shape=(10,),
             dtype=np.float32,
         )
@@ -101,6 +101,11 @@ class AcEnv(gym.Env):
         velocity_x = float(data_dict['velocity[0]'])
         velocity_z = float(data_dict['velocity[1]'])
 
+        heading_error = get_heading_error(self.spline_points, world_loc_x, world_loc_y, np.array([
+            velocity_x, velocity_z]))
+        dist_offcenter = get_distance_to_center_line(
+            self.spline_points, world_loc_x, world_loc_y)
+
         # Lap stays invalid as soon as it has been invalid once
         lap_invalid = self._invalid_flag
         if data_dict['lap_invalid'] == 'True':
@@ -109,7 +114,7 @@ class AcEnv(gym.Env):
 
         # Update the observations
         self._observations = np.array(
-            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count, previous_track_progress, velocity_x, velocity_z], dtype=np.float32)
+            [track_progress, speed_kmh, world_loc_x, world_loc_y, world_loc_z, lap_invalid, lap_count, previous_track_progress, heading_error, dist_offcenter], dtype=np.float32)
         return self._observations
 
     def _get_info(self):
@@ -234,15 +239,8 @@ class AcEnv(gym.Env):
         :return: The reward.
         """
         speed = self._observations[1]  # speed in the forward direction
-        world_x = self._observations[2]
-        world_z = self._observations[4]
-        velocity_x = self._observations[8]
-        velocity_z = self._observations[9]
-        # angle in degrees between car direction and track direction
-        theta = get_heading_error(self.spline_points, world_x, world_z, np.array([
-                                  velocity_x, velocity_z]))
-        dist_offcenter = get_distance_to_center_line(
-            self.spline_points, world_x, world_z)  # distance from center of track
+        theta = self._observations[8]
+        dist_offcenter = self._observations[9]
 
         # reward = math.cos(theta) * speed - abs(speed * math.sin(theta)) - abs(2 * speed * math.sin(theta) * dist_offcenter)
         reward = math.cos(theta) - abs(math.sin(theta)) - \
