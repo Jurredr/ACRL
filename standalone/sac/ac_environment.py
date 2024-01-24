@@ -244,8 +244,9 @@ class AcEnv(gym.Env):
         dist_offcenter = get_distance_to_center_line(
             self.spline_points, world_x, world_z)  # distance from center of track
 
-        reward = (speed * math.cos(theta).real) - (weight_wrongdir *
-                                                   speed * math.sin(theta).real) - (weight_offcenter * speed * abs(dist_offcenter)) - (weight_lowspeed * max(0, min_speed - speed))
+        # reward = math.cos(theta) * speed - abs(speed * math.sin(theta)) - abs(2 * speed * math.sin(theta) * dist_offcenter)
+        reward = math.cos(theta) - abs(math.sin(theta)) - \
+            abs(dist_offcenter) + speed / self.max_speed
         if extra_offcenter_penalty:
             reward -= (weight_extra_offcenter * abs(dist_offcenter))
 
@@ -293,7 +294,7 @@ class AcEnv(gym.Env):
         if ignore_done:
             terminated = False
         else:
-            terminated = lap_invalid == 1.0 or lap_count > 1.0 or track_progress >= progress_goal
+            terminated = lap_count > 1.0 or track_progress >= progress_goal
 
         # Truncated gets updated based on timesteps by TimeLimit wrapper
         truncated = False
@@ -302,8 +303,7 @@ class AcEnv(gym.Env):
         reward = None
         info = None
         if not ignore_done:
-            reward = self._get_reward_5(min_speed=10.0, weight_lowspeed=0.5, weight_offcenter=1.0,
-                                        weight_extra_offcenter=1.0, extra_offcenter_penalty=False)
+            reward = self._get_reward_5()
             info = self._get_info()
 
         return observation, reward, terminated, truncated, info
