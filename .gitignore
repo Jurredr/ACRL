@@ -51,3 +51,7 @@ docs/_build/
 
 # Experiment output
 standalone/experiments
+
+results/
+
+.DS_Store
